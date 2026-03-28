@@ -1,0 +1,62 @@
+# Sensitive Files - NEVER COMMIT THESE!
+.env
+*.pem
+cert.pem
+key.pem
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+
+# Virtual Environment
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+backend.log
+frontend.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Test files
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Flask
+instance/
+.webassets-cache
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# API Keys and Secrets (redundant but important)
+*.key
+*.secret
+secrets/
+credentials/

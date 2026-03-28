@@ -1,5 +1,5 @@
 // Configuration
-const API_URL = 'http://localhost:5000/api/chat';
+const API_URL = '/api/chat';
 
 // DOM Elements
 const chatContainer = document.getElementById('chatContainer');
@@ -56,15 +56,21 @@ function initSpeechRecognition() {
         stopRecording();
 
         if (event.error === 'no-speech') {
-            showError('No speech detected. Please try again.');
+            showError('No speech detected. Please try again or use text input below.');
         } else if (event.error === 'not-allowed') {
-            showError('Microphone access denied. Please allow microphone access in browser settings.');
+            showError('⚠️ Microphone blocked. Please allow mic in browser settings, then refresh the page.');
         } else if (event.error === 'network') {
-            showError('Network error. Check internet connection and try again. Speech recognition needs internet.');
+            // Network error is common on HTTP (not HTTPS)
+            showError('⚠️ Voice input unavailable (browser security). Please use TEXT INPUT below - it works perfectly!');
+            // Hide mic button after repeated failures
+            if (voiceButton) {
+                voiceButton.style.opacity = '0.5';
+                voiceButton.title = 'Voice unavailable - use text input';
+            }
         } else if (event.error === 'service-not-allowed') {
-            showError('Speech service not allowed. Please use Chrome/Edge browser.');
+            showError('Speech service blocked. Please use TEXT INPUT below.');
         } else {
-            showError(`Speech error: ${event.error}. Try refreshing the page.`);
+            showError(`Speech error: ${event.error}. Please use TEXT INPUT - it works great!`);
         }
     };
 
@@ -300,7 +306,7 @@ window.addEventListener('load', async () => {
 
     // Initialize speech recognition if supported
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-        console.log('Speech recognition available');
+        console.log('✅ Voice input ready with HTTPS!');
     } else {
         console.log('Speech recognition not supported');
         if (voiceButton) voiceButton.style.display = 'none';

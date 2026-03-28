@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import google.generativeai as genai
 import os
@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.')
 CORS(app)
 
 # Configure Gemini API
@@ -99,8 +99,27 @@ def chat():
 def health():
     return jsonify({'status': 'healthy', 'message': 'FIR Assistant API is running'})
 
+# Serve frontend files
+@app.route('/')
+def index():
+    return send_from_directory('.', 'index.html')
+
+@app.route('/<path:path>')
+def serve_static(path):
+    return send_from_directory('.', path)
+
 if __name__ == '__main__':
-    print("🚀 Starting FIR Voice Assistant Server...")
-    print("📡 Server will run on http://localhost:5000")
-    print("🔑 Make sure your GEMINI_API_KEY is set in .env file")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    print("🚀 Starting AI Voice FIR Assistant...")
+    print("📡 Server: https://localhost:5000")
+    print("🎤 Voice Input: ENABLED with HTTPS")
+    print("🔑 API Key: " + ("✅ Set" if GEMINI_API_KEY else "❌ Missing"))
+    print("🔒 Certificate: Self-signed (accept browser warning)")
+    print("\n👉 Open: https://localhost:5000\n")
+
+    # Serve frontend and API from single Flask server
+    app.run(
+        debug=True,
+        host='0.0.0.0',
+        port=5000,
+        ssl_context=('cert.pem', 'key.pem')
+    )
