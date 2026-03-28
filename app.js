@@ -91,16 +91,21 @@ async function handleUserSpeech(text) {
 
     // Send to AI
     try {
-        const response = await sendToAI(text);
+        const data = await sendToAI(text);
 
         // Hide typing indicator
         hideTypingIndicator();
 
         // Add AI response to chat
-        addMessage(response, 'ai');
+        addMessage(data.response, 'ai');
 
-        // Speak the response
-        speakText(response);
+        // Play audio from backend if available
+        if (data.audio) {
+            playAudioFromBackend(data.audio);
+        } else {
+            // Fallback to browser TTS
+            speakText(data.response);
+        }
 
     } catch (error) {
         hideTypingIndicator();
@@ -141,7 +146,7 @@ async function sendToAI(userMessage) {
         parts: [{ text: data.response }]
     });
 
-    return data.response;
+    return data;
 }
 
 // Add message to chat
@@ -183,7 +188,7 @@ function hideTypingIndicator() {
     }
 }
 
-// Text-to-Speech
+// Text-to-Speech with better language support
 function speakText(text) {
     // Cancel any ongoing speech
     speechSynthesis.cancel();
@@ -193,26 +198,66 @@ function speakText(text) {
     // Set language based on selection
     const language = languageSelect.value;
     utterance.lang = language;
-    utterance.rate = 0.9; // Slightly slower for better clarity
+    utterance.rate = 0.85; // Slower for Indian languages
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
 
-    // Get appropriate voice for the selected language
-    const voices = speechSynthesis.getVoices();
+    // Wait for voices to be loaded
+    const setVoice = () => {
+        const voices = speechSynthesis.getVoices();
 
-    // Try to find the best voice for the language
-    let voice = voices.find(v => v.lang === language);
-    if (!voice) {
-        // Fallback to language family (e.g., 'te' for 'te-IN')
-        const langFamily = language.split('-')[0];
-        voice = voices.find(v => v.lang.startsWith(langFamily));
-    }
+        console.log('Available voices:', voices.map(v => `${v.name} (${v.lang})`));
 
-    if (voice) {
-        utterance.voice = voice;
-        console.log('Using voice:', voice.name, voice.lang);
+        let voice = null;
+
+        // Exact match first (e.g., 'te-IN')
+        voice = voices.find(v => v.lang === language);
+
+        // Try language code match (e.g., 'te')
+        if (!voice) {
+            const langCode = language.split('-')[0];
+            voice = voices.find(v => v.lang.startsWith(langCode));
+        }
+
+        // Try finding by language name in voice name
+        if (!voice) {
+            const languageNames = {
+                'te-IN': ['telugu', 'తెలుగు'],
+                'hi-IN': ['hindi', 'हिंदी'],
+                'en-IN': ['english', 'india']
+            };
+
+            const names = languageNames[language] || [];
+            for (const name of names) {
+                voice = voices.find(v =>
+                    v.name.toLowerCase().includes(name) ||
+                    v.lang.toLowerCase().includes(name)
+                );
+                if (voice) break;
+            }
+        }
+
+        // Fallback to any Indian English voice for Telugu/Hindi if no native voice
+        if (!voice && (language === 'te-IN' || language === 'hi-IN')) {
+            voice = voices.find(v => v.lang === 'en-IN');
+        }
+
+        if (voice) {
+            utterance.voice = voice;
+            console.log('✅ Using voice:', voice.name, '(', voice.lang, ')');
+        } else {
+            console.warn('⚠️ No voice found for', language, '- using default');
+            console.log('💡 Install language packs in your browser for better support');
+        }
+
+        speechSynthesis.speak(utterance);
+    };
+
+    // Chrome needs voices to be loaded first
+    if (speechSynthesis.getVoices().length > 0) {
+        setVoice();
     } else {
-        console.log('No voice found for', language, '- using default');
+        speechSynthesis.onvoiceschanged = setVoice;
     }
 
     utterance.onend = () => {
@@ -221,10 +266,8 @@ function speakText(text) {
     };
 
     utterance.onerror = (event) => {
-        console.error('Speech synthesis error:', event);
+        console.error('❌ Speech synthesis error:', event);
     };
-
-    speechSynthesis.speak(utterance);
 }
 
 // Start/Stop recording
