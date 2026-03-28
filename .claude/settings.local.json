@@ -59,7 +59,16 @@
       "Bash(python -c \"import os; os.environ[''SARVAM_API_KEY''] = ''test''; from sarvamai import SarvamAI; client = SarvamAI\\(\\); print\\(type\\(client.chat\\)\\)\")",
       "Bash(python -c \"import os; os.environ[''SARVAM_API_KEY''] = ''test''; from sarvamai import SarvamAI; client = SarvamAI\\(\\); print\\([m for m in dir\\(client.chat\\) if not m.startswith\\(''_''\\)]\\)\")",
       "Bash(python -c \"import os; os.environ[''SARVAM_API_KEY''] = ''test''; from sarvamai import SarvamAI; client = SarvamAI\\(\\); print\\(type\\(client.chat.completions\\)\\); print\\([m for m in dir\\(client.chat.completions\\) if not m.startswith\\(''_''\\)]\\)\")",
-      "Bash(curl -k https://localhost:5000/health)"
+      "Bash(curl -k https://localhost:5000/health)",
+      "Bash(pkill -f \"python.*server.py\")",
+      "Bash(python -c \":*)",
+      "Read(//e/Praja/**)",
+      "Bash(ps -W)",
+      "Bash(xargs -r kill -9)",
+      "Bash(tasklist)",
+      "Bash(while read:*)",
+      "Bash(do taskkill:*)",
+      "Bash(done)"
     ]
   }
 }

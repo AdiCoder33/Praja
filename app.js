@@ -9,9 +9,16 @@ const errorMessage = document.getElementById('errorMessage');
 
 // State
 let isRecording = false;
+window.recognition = null;
 let recognition = null;
 let speechSynthesis = window.speechSynthesis;
 let conversationHistory = [];
+window.currentAudio = null; // Track current audio playback
+window.isAISpeaking = false; // Track if AI is speaking
+window.conversationMode = false; // Continuous conversation mode
+window.isProcessing = false; // Prevent duplicate processing
+let speechTimeout = null; // Timer for speech pause detection
+let pendingSpeech = ''; // Store speech while waiting
 
 // Initialize Speech Recognition
 function initSpeechRecognition() {
@@ -22,8 +29,9 @@ function initSpeechRecognition() {
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognition = new SpeechRecognition();
+    window.recognition = recognition; // Make available globally
 
-    recognition.continuous = false;
+    recognition.continuous = true; // Keep listening continuously
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
@@ -42,13 +50,64 @@ function initSpeechRecognition() {
             .map(result => result[0].transcript)
             .join('');
 
-        if (event.results[0].isFinal) {
-            handleUserSpeech(transcript);
-        } else {
-            // Show interim results
+        // Show interim results
+        if (!event.results[0].isFinal) {
             const textInput = document.getElementById('textInput');
             if (textInput) textInput.placeholder = `Hearing: "${transcript}"`;
+            return; // Don't process interim results
         }
+
+        // Only process FINAL results with actual content
+        const finalText = transcript.trim();
+
+        // Ignore empty, very short, or noise-like inputs
+        if (finalText.length < 3) {
+            console.log('Ignored short/noise input:', finalText);
+            return;
+        }
+
+        // If user speaks while AI is talking, interrupt AI (only on final speech)
+        if (window.isAISpeaking) {
+            console.log('🛑 User interrupted AI');
+            stopAISpeech();
+        }
+
+        // Accumulate speech if user continues talking
+        if (speechTimeout) {
+            // User is continuing to speak - append new text
+            pendingSpeech = pendingSpeech + ' ' + finalText;
+            clearTimeout(speechTimeout);
+            console.log('⏱️ User still speaking, accumulated:', pendingSpeech);
+        } else {
+            // First speech or new speech after processing
+            pendingSpeech = finalText;
+            console.log('🎤 New speech captured:', pendingSpeech);
+        }
+
+        // Show waiting message
+        const textInput = document.getElementById('textInput');
+        if (textInput) textInput.placeholder = `Got: "${pendingSpeech}" - waiting 4s for more...`;
+
+        // Wait 4 seconds before processing
+        speechTimeout = setTimeout(() => {
+            console.log('✅ 4 seconds of silence, processing:', pendingSpeech);
+
+            // STOP recognition to prevent duplicates during processing
+            try {
+                recognition.stop();
+            } catch (e) {
+                console.log('Recognition already stopped');
+            }
+
+            // Process the accumulated speech
+            if (textInput) textInput.placeholder = 'Processing...';
+            handleUserSpeech(pendingSpeech);
+
+            // Clear pending speech
+            pendingSpeech = '';
+            speechTimeout = null;
+        }, 4000); // 4 second delay
+    };
     };
 
     recognition.onerror = (event) => {
@@ -75,14 +134,60 @@ function initSpeechRecognition() {
     };
 
     recognition.onend = () => {
-        stopRecording();
+        // Auto-restart in conversation mode (but not while AI is speaking or processing)
+        if (window.conversationMode && !window.isAISpeaking && !window.isProcessing) {
+            setTimeout(() => {
+                // Double-check before restarting
+                if (window.conversationMode && !window.isProcessing) {
+                    try {
+                        recognition.lang = languageSelect.value;
+                        recognition.start();
+                        console.log('🎤 Recognition auto-restarted');
+                    } catch (error) {
+                        console.log('Recognition restart skipped:', error.message);
+                    }
+                }
+            }, 500); // Small delay before restarting
+        } else if (!window.conversationMode) {
+            stopRecording();
+        }
     };
 
     return true;
 }
 
+// Stop AI speech (for interruption)
+function stopAISpeech() {
+    window.isAISpeaking = false;
+
+    // Stop backend audio
+    if (window.currentAudio) {
+        window.currentAudio.pause();
+        window.currentAudio.currentTime = 0;
+        window.currentAudio = null;
+    }
+
+    // Stop browser TTS
+    speechSynthesis.cancel();
+
+    console.log('🛑 AI speech interrupted by user');
+}
+
 // Handle user speech
 async function handleUserSpeech(text) {
+    // Prevent duplicate processing
+    if (window.isProcessing) {
+        console.log('⚠️ Already processing, ignoring duplicate input');
+        return;
+    }
+
+    window.isProcessing = true;
+
+    // Stop AI if it's speaking
+    if (window.isAISpeaking) {
+        stopAISpeech();
+    }
+
     // Add user message to chat
     addMessage(text, 'user');
 
@@ -99,6 +204,9 @@ async function handleUserSpeech(text) {
         // Add AI response to chat
         addMessage(data.response, 'ai');
 
+        // Mark AI as speaking
+        window.isAISpeaking = true;
+
         // Play audio from backend if available
         if (data.audio) {
             playAudioFromBackend(data.audio);
@@ -109,6 +217,20 @@ async function handleUserSpeech(text) {
 
     } catch (error) {
         hideTypingIndicator();
+        window.isAISpeaking = false;
+        window.isProcessing = false; // Reset on error
+
+        // Restart listening on error if in conversation mode
+        if (window.conversationMode && window.recognition) {
+            setTimeout(() => {
+                try {
+                    window.recognition.start();
+                } catch (e) {
+                    console.log('Could not restart after error:', e.message);
+                }
+            }, 1000);
+        }
+
         showError('Failed to get AI response. Please check if the server is running.');
         console.error('AI Error:', error);
     }
@@ -118,35 +240,52 @@ async function handleUserSpeech(text) {
 async function sendToAI(userMessage) {
     const language = languageSelect.value;
 
-    const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            message: userMessage,
-            language: language,
-            history: conversationHistory
-        })
-    });
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-    if (!response.ok) {
-        throw new Error('Network response was not ok');
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: userMessage,
+                language: language,
+                history: conversationHistory
+            }),
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+
+        const data = await response.json();
+
+        // Update conversation history
+        conversationHistory.push({
+            role: 'user',
+            parts: [{ text: userMessage }]
+        });
+        conversationHistory.push({
+            role: 'model',
+            parts: [{ text: data.response }]
+        });
+
+        return data;
+
+    } catch (error) {
+        clearTimeout(timeoutId);
+
+        if (error.name === 'AbortError') {
+            throw new Error('Request timeout - server took too long (30s). Server may be restarting, please try again.');
+        }
+        throw error;
     }
-
-    const data = await response.json();
-
-    // Update conversation history
-    conversationHistory.push({
-        role: 'user',
-        parts: [{ text: userMessage }]
-    });
-    conversationHistory.push({
-        role: 'model',
-        parts: [{ text: data.response }]
-    });
-
-    return data;
 }
 
 // Add message to chat
@@ -261,16 +400,36 @@ function speakText(text) {
     }
 
     utterance.onend = () => {
+        window.isAISpeaking = false;
+        window.isProcessing = false; // Reset processing flag
         const textInput = document.getElementById('textInput');
         if (textInput) textInput.placeholder = 'Type your message or click mic...';
+
+        console.log('✅ Browser TTS finished, waiting before listening...');
+
+        // Auto-restart listening if in conversation mode
+        if (window.conversationMode && window.recognition) {
+            setTimeout(() => {
+                if (!window.isProcessing && window.conversationMode) {
+                    try {
+                        window.recognition.start();
+                        console.log('🎤 Auto-restarted listening after browser TTS');
+                    } catch (error) {
+                        console.log('Recognition auto-restart skipped:', error.message);
+                    }
+                }
+            }, 1500); // Increased delay to 1.5 seconds
+        }
     };
 
     utterance.onerror = (event) => {
         console.error('❌ Speech synthesis error:', event);
+        window.isAISpeaking = false;
+        window.isProcessing = false; // Reset on error
     };
 }
 
-// Start/Stop recording
+// Start/Stop conversation mode
 function toggleRecording() {
     if (!recognition) {
         if (!initSpeechRecognition()) {
@@ -279,14 +438,30 @@ function toggleRecording() {
         }
     }
 
-    if (isRecording) {
+    if (window.conversationMode) {
+        // Stop conversation mode
+        window.conversationMode = false;
         recognition.stop();
+        stopRecording();
+        console.log('🛑 Conversation mode stopped');
     } else {
+        // Start conversation mode
+        window.conversationMode = true;
         try {
             recognition.lang = languageSelect.value;
             recognition.start();
+            isRecording = true;
+            if (voiceButton) {
+                voiceButton.classList.add('recording');
+                voiceButton.textContent = '🔴';
+                voiceButton.title = 'Click to stop conversation';
+            }
+            const textInput = document.getElementById('textInput');
+            if (textInput) textInput.placeholder = '🎤 Listening continuously... (Click mic to stop)';
+            console.log('🎤 Conversation mode started - Always listening!');
         } catch (error) {
             console.error('Failed to start recognition:', error);
+            window.conversationMode = false;
             showError('Cannot start microphone. Please use text input below.');
         }
     }
@@ -294,12 +469,23 @@ function toggleRecording() {
 
 function stopRecording() {
     isRecording = false;
+    window.conversationMode = false;
+
+    // Clear any pending speech timeout
+    if (speechTimeout) {
+        clearTimeout(speechTimeout);
+        speechTimeout = null;
+        pendingSpeech = '';
+        console.log('🛑 Cleared pending speech');
+    }
+
     if (voiceButton) {
         voiceButton.classList.remove('recording');
         voiceButton.textContent = '🎤';
+        voiceButton.title = 'Click to start continuous conversation';
     }
     const textInput = document.getElementById('textInput');
-    if (textInput) textInput.placeholder = 'Type your message or click mic...';
+    if (textInput) textInput.placeholder = 'Type your message or click mic to start conversation...';
 }
 
 // Show error message

@@ -108,14 +108,14 @@ def chat():
             # Add conversation history
             for msg in history:
                 role = msg.get('role', 'user')
-                if role == 'user':
-                    content = msg.get('parts', [{}])[0].get('text', '')
-                else:
-                    content = msg.get('parts', [{}])[0].get('text', '')
+                content = msg.get('parts', [{}])[0].get('text', '')
 
                 if content:
+                    # Map Gemini's 'model' role to Sarvam's 'assistant' role
+                    sarvam_role = 'assistant' if role == 'model' else role
+
                     messages.append({
-                        'role': role,
+                        'role': sarvam_role,
                         'content': content
                     })
 
