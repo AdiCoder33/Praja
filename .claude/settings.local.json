@@ -71,7 +71,8 @@
       "Bash(done)",
       "Bash(README.md:*)",
       "Bash(python -c \"from app import create_app; print\\(''✅ Import successful''\\)\")",
-      "Bash(curl -k https://localhost:5000/)"
+      "Bash(curl -k https://localhost:5000/)",
+      "Bash(npm create:*)"
     ]
   }
 }
