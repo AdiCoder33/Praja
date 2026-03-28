@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install:*)",
+      "Bash(python server.py)",
+      "Bash(start index.html)",
+      "Bash(python -m http.server 8000)",
+      "Bash(start http://localhost:8000/index.html)",
+      "Bash(curl -s http://localhost:5000/health)",
+      "Bash(curl -s http://localhost:8000/)",
+      "Bash(taskkill /F /IM python.exe)",
+      "Bash(curl -X POST http://localhost:5000/api/chat -H \"Content-Type: application/json\" -d \"{\"\"message\"\":\"\"hi\"\",\"\"language\"\":\"\"en-IN\"\",\"\"history\"\":[]}\")",
+      "Bash(curl -s -X POST http://localhost:5000/api/chat -H \"Content-Type: application/json\" -d '{\"\"message\"\":\"\"hi\"\",\"\"language\"\":\"\"en-IN\"\",\"\"history\"\":[]}')",
+      "Bash(netstat -ano)",
+      "Bash(findstr :8000)",
+      "Bash(python -m http.server 8080)",
+      "Bash(start http://localhost:8080/index.html)",
+      "Bash(findstr \"5000 8080\")",
+      "Bash(findstr LISTENING)",
+      "Bash(curl -s -X POST http://localhost:5000/api/chat -H \"Content-Type: application/json\" -d '{\"\"message\"\":\"\"test\"\",\"\"language\"\":\"\"en-IN\"\",\"\"history\"\":[]}')",
+      "Bash(pkill -f \"python server.py\")",
+      "Bash(xargs kill:*)",
+      "Bash(curl -s -X POST http://localhost:5000/api/chat -H \"Content-Type: application/json\" -d '{\"\"message\"\":\"\"I lost my phone\"\",\"\"language\"\":\"\"en-IN\"\",\"\"history\"\":[]}')",
+      "Bash(python -c \"import google.generativeai as genai; import os; from dotenv import load_dotenv; load_dotenv\\(\\); genai.configure\\(api_key=os.getenv\\(''GEMINI_API_KEY''\\)\\); models = genai.list_models\\(\\); print\\(''Available models:''\\); [print\\(f''- {m.name}''\\) for m in models if ''generateContent'' in m.supported_generation_methods]\")",
+      "Bash(pkill -9 -f \"python.*server.py\")",
+      "Bash(curl -s -X POST http://localhost:5000/api/chat -H \"Content-Type: application/json\" -d '{\"\"message\"\":\"\"I lost my mobile phone yesterday\"\",\"\"language\"\":\"\"en-IN\"\",\"\"history\"\":[]}')",
+      "Bash(pkill -9 -f \"http.server.*8080\")"
+    ]
+  }
+}
