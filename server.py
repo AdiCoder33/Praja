@@ -1,20 +1,27 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 from gtts import gTTS
 import uuid
 import base64
 
-# Try to import Sarvam AI (fallback to gTTS if not available)
+# Import Sarvam AI modules
 try:
     from sarvam_tts import generate_speech_sarvam
-    USE_SARVAM = True
-    print("✅ Using Sarvam AI for TTS (Better Indian language support!)")
-except:
-    USE_SARVAM = False
-    print("⚠️ Sarvam AI not configured, using gTTS")
+    from sarvam_chat import chat_with_sarvam, create_fir_system_prompt
+    USE_SARVAM_CHAT = True
+    USE_SARVAM_TTS = True
+    print("✅ Using Sarvam AI for Chat & TTS (Full Indian AI stack!)")
+except Exception as e:
+    USE_SARVAM_CHAT = False
+    USE_SARVAM_TTS = False
+    print(f"⚠️ Sarvam AI not available: {e}")
+    print("⚠️ Falling back to Gemini + gTTS")
+
+# Import Gemini as fallback for chat
+if not USE_SARVAM_CHAT:
+    import google.generativeai as genai
 
 # Load environment variables
 load_dotenv()
@@ -22,12 +29,12 @@ load_dotenv()
 app = Flask(__name__, static_folder='.')
 CORS(app)
 
-# Configure Gemini API
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
-if not GEMINI_API_KEY:
-    print("⚠️  WARNING: GEMINI_API_KEY not found in .env file")
-
-genai.configure(api_key=GEMINI_API_KEY)
+# Configure Gemini API (only if Sarvam Chat is not available)
+if not USE_SARVAM_CHAT:
+    GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+    if not GEMINI_API_KEY:
+        print("⚠️  WARNING: GEMINI_API_KEY not found in .env file")
+    genai.configure(api_key=GEMINI_API_KEY)
 
 # System prompt for FIR assistant
 SYSTEM_PROMPT_TEMPLATE = """You are an AI assistant helping people file FIR (First Information Report) in India.
@@ -85,32 +92,65 @@ def chat():
         }
         language_name = language_map.get(language_code, 'English')
 
-        # Initialize model (using lite version for lower quota usage)
-        model = genai.GenerativeModel('models/gemini-flash-lite-latest')
+        if USE_SARVAM_CHAT:
+            # Use Sarvam AI for chat (Indian AI)
+            system_prompt = create_fir_system_prompt(language_name)
 
-        # Create system prompt with selected language
-        system_prompt = SYSTEM_PROMPT_TEMPLATE.format(language=language_name)
+            # Build messages array for Sarvam AI
+            messages = []
 
-        # Create chat with system instruction
-        chat = model.start_chat(history=[])
+            # Add system message
+            messages.append({
+                'role': 'system',
+                'content': system_prompt
+            })
 
-        # Send system prompt first if history is empty
-        if not history:
-            chat.send_message(system_prompt)
-        else:
-            # Rebuild chat history
+            # Add conversation history
             for msg in history:
-                if msg['role'] == 'user':
-                    chat.send_message(msg['parts'][0]['text'])
+                role = msg.get('role', 'user')
+                if role == 'user':
+                    content = msg.get('parts', [{}])[0].get('text', '')
+                else:
+                    content = msg.get('parts', [{}])[0].get('text', '')
 
-        # Send user message
-        response = chat.send_message(user_message)
-        ai_response = response.text
+                if content:
+                    messages.append({
+                        'role': role,
+                        'content': content
+                    })
+
+            # Add current user message
+            messages.append({
+                'role': 'user',
+                'content': user_message
+            })
+
+            # Get response from Sarvam AI
+            ai_response = chat_with_sarvam(messages, language_code)
+
+            if not ai_response:
+                ai_response = "I apologize, but I'm having trouble processing your request. Please try again."
+
+        else:
+            # Fallback to Gemini
+            model = genai.GenerativeModel('models/gemini-flash-lite-latest')
+            system_prompt = SYSTEM_PROMPT_TEMPLATE.format(language=language_name)
+            chat = model.start_chat(history=[])
+
+            if not history:
+                chat.send_message(system_prompt)
+            else:
+                for msg in history:
+                    if msg['role'] == 'user':
+                        chat.send_message(msg['parts'][0]['text'])
+
+            response = chat.send_message(user_message)
+            ai_response = response.text
 
         # Generate audio for the response
         audio_base64 = None
         try:
-            if USE_SARVAM:
+            if USE_SARVAM_TTS:
                 # Use Sarvam AI TTS (better for Indian languages)
                 audio_base64 = generate_speech_sarvam(ai_response, language_code)
             else:
@@ -172,7 +212,18 @@ if __name__ == '__main__':
     print("🚀 Starting AI Voice FIR Assistant...")
     print("📡 Server: https://localhost:5000")
     print("🎤 Voice Input: ENABLED with HTTPS")
-    print("🔑 API Key: " + ("✅ Set" if GEMINI_API_KEY else "❌ Missing"))
+
+    if USE_SARVAM_CHAT:
+        print("🤖 AI Chat: Sarvam AI (Made in India 🇮🇳)")
+    else:
+        print("🤖 AI Chat: Gemini (Google)")
+        print("🔑 API Key: " + ("✅ Set" if GEMINI_API_KEY else "❌ Missing"))
+
+    if USE_SARVAM_TTS:
+        print("🔊 Voice Output: Sarvam AI (Natural Indian voices)")
+    else:
+        print("🔊 Voice Output: gTTS (Google)")
+
     print("🔒 Certificate: Self-signed (accept browser warning)")
     print("\n👉 Open: https://localhost:5000\n")
 

@@ -50,13 +50,12 @@ def generate_speech_sarvam(text, language_code='te-IN'):
     payload = {
         'inputs': [text],
         'target_language_code': sarvam_lang,
-        'speaker': 'meera',  # or 'arvind' for male voice
-        'pitch': 0,
+        'speaker': 'kavya',  # Female voice (other options: anushka, vidya, priya)
+        # Male voices: abhilash, karun, rahul, rohan
         'pace': 1.0,
-        'loudness': 1.5,
         'speech_sample_rate': 22050,
         'enable_preprocessing': True,
-        'model': 'bulbul:v1'
+        'model': 'bulbul:v3'  # Latest model (v2, v3-beta, v3)
     }
 
     try:

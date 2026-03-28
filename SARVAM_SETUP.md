@@ -7,7 +7,7 @@ Sarvam AI is **India's own AI** company with **best-in-class support** for India
 ### **Benefits:**
 - ✅ **10+ Indian languages:** Telugu, Hindi, Tamil, Kannada, Malayalam, Bengali, Gujarati, Marathi, Punjabi, Odia
 - ✅ **Native pronunciation:** Better than Google TTS
-- ✅ **Natural voices:** "Meera" (female), "Arvind" (male)
+- ✅ **Natural voices:** 45+ voices (Kavya, Anushka, Vidya, Abhilash, Rahul, etc.)
 - ✅ **Free tier available**
 - ✅ **Made in India** 🇮🇳
 

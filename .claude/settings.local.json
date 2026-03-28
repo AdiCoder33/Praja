@@ -50,7 +50,16 @@
       "Bash(curl -k -m 5 -s https://localhost:5000/health)",
       "Bash(curl -k -m 5 https://localhost:5000/health)",
       "Bash(curl -k -m 10 -X POST https://localhost:5000/api/chat -H \"Content-Type: application/json\" -d '{\"\"message\"\":\"\"test\"\",\"\"language\"\":\"\"en-IN\"\",\"\"history\"\":[]}')",
-      "Bash(curl -k -m 30 -X POST https://localhost:5000/api/chat -H \"Content-Type: application/json\" -d '{\"\"\"\"message\"\"\"\":\"\"\"\"My phone was stolen\"\"\"\",\"\"\"\"language\"\"\"\":\"\"\"\"en-IN\"\"\"\",\"\"\"\"history\"\"\"\":[{\"\"\"\"role\"\"\"\":\"\"\"\"user\"\"\"\",\"\"\"\"parts\"\"\"\":[{\"\"\"\"text\"\"\"\":\"\"\"\"test\"\"\"\"}]},{\"\"\"\"role\"\"\"\":\"\"\"\"model\"\"\"\",\"\"\"\"parts\"\"\"\":[{\"\"\"\"text\"\"\"\":\"\"\"\"hello\"\"\"\"}]}]}')"
+      "Bash(curl -k -m 30 -X POST https://localhost:5000/api/chat -H \"Content-Type: application/json\" -d '{\"\"\"\"message\"\"\"\":\"\"\"\"My phone was stolen\"\"\"\",\"\"\"\"language\"\"\"\":\"\"\"\"en-IN\"\"\"\",\"\"\"\"history\"\"\"\":[{\"\"\"\"role\"\"\"\":\"\"\"\"user\"\"\"\",\"\"\"\"parts\"\"\"\":[{\"\"\"\"text\"\"\"\":\"\"\"\"test\"\"\"\"}]},{\"\"\"\"role\"\"\"\":\"\"\"\"model\"\"\"\",\"\"\"\"parts\"\"\"\":[{\"\"\"\"text\"\"\"\":\"\"\"\"hello\"\"\"\"}]}]}')",
+      "Bash(python sarvam_tts.py)",
+      "Bash(python sarvam_chat.py)",
+      "Bash(python -c \"import sarvamai; print\\(dir\\(sarvamai\\)\\)\")",
+      "Bash(python -c \"from sarvamai import SarvamAI; import inspect; print\\(inspect.signature\\(SarvamAI.__init__\\)\\)\")",
+      "Bash(python -c \"from sarvamai import SarvamAI; client = SarvamAI\\(\\); print\\(type\\(client.chat\\)\\); print\\(dir\\(client.chat\\)\\)\")",
+      "Bash(python -c \"import os; os.environ[''SARVAM_API_KEY''] = ''test''; from sarvamai import SarvamAI; client = SarvamAI\\(\\); print\\(type\\(client.chat\\)\\)\")",
+      "Bash(python -c \"import os; os.environ[''SARVAM_API_KEY''] = ''test''; from sarvamai import SarvamAI; client = SarvamAI\\(\\); print\\([m for m in dir\\(client.chat\\) if not m.startswith\\(''_''\\)]\\)\")",
+      "Bash(python -c \"import os; os.environ[''SARVAM_API_KEY''] = ''test''; from sarvamai import SarvamAI; client = SarvamAI\\(\\); print\\(type\\(client.chat.completions\\)\\); print\\([m for m in dir\\(client.chat.completions\\) if not m.startswith\\(''_''\\)]\\)\")",
+      "Bash(curl -k https://localhost:5000/health)"
     ]
   }
 }

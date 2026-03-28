@@ -5,5 +5,5 @@ python-dotenv==1.0.0
 gTTS==2.5.0
 requests==2.31.0
 
-# Optional: Sarvam AI for better Indian language support
-# sarvamai
+# Sarvam AI for better Indian language support
+sarvamai
