@@ -68,7 +68,8 @@
       "Bash(tasklist)",
       "Bash(while read:*)",
       "Bash(do taskkill:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(README.md:*)"
     ]
   }
 }

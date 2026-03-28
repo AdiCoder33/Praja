@@ -7,7 +7,9 @@ from sarvamai import SarvamAI
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load environment variables from config folder
+config_path = os.path.join(os.path.dirname(__file__), '../../config/.env')
+load_dotenv(config_path)
 
 SARVAM_API_KEY = os.getenv('SARVAM_API_KEY')
 
