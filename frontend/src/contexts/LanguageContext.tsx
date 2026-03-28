@@ -10,6 +10,7 @@ interface LanguageContextType {
 
 const translations = {
   en: {
+    'nav.brand': 'Praja FIR',
     'hero.title': 'AI-Powered FIR Filing System',
     'hero.quote': 'Justice delayed is justice denied.\nFile your complaint instantly with AI assistance.',
     'hero.btn': 'File Complaint Now',
@@ -39,20 +40,21 @@ const translations = {
     'nav.contact': 'Contact',
   },
   te: {
-    'hero.title': 'AI ఆధారిత FIR దాఖలు వ్యవస్థ',
-    'hero.quote': 'ఆలస్యమైన న్యాయం అన్యాయం.\nAI సహాయంతో మీ ఫిర్యాదును తక్షణమే దాఖలు చేయండి.',
+    'nav.brand': 'ప్రజా ఎఫ్‌ఐఆర్',
+    'hero.title': 'ఎఐ ఆధారిత ఎఫ్‌ఐఆర్ దాఖలు వ్యవస్థ',
+    'hero.quote': 'ఆలస్యమైన న్యాయం అన్యాయం.\nఎఐ సహాయంతో మీ ఫిర్యాదును తక్షణమే దాఖలు చేయండి.',
     'hero.btn': 'ఇప్పుడే ఫిర్యాదు చేయండి',
     'banner.heading': 'నిజ-సమయ నవీకరణలు',
-    'banner.text': '🔔 24/7 AI మద్దతు • తక్షణ దాఖలు • సురక్షితం & గోప్యం • బహుభాషా మద్దతు • చట్టపరమైన ఖచ్చితత్వం హామీ',
+    'banner.text': '🔔 24/7 ఎఐ మద్దతు • తక్షణ దాఖలు • సురక్షితం & గోప్యం • బహుభాషా మద్దతు • చట్టపరమైన ఖచ్చితత్వం హామీ',
     'card.citizen.title': 'పౌరులకు',
-    'card.citizen.desc': 'మీ భాషలో AI వాయిస్ సహాయంతో మీ FIRని త్వరగా మరియు సులభంగా దాఖలు చేయండి.',
-    'card.citizen.btn': 'FIR దాఖలు చేయండి',
+    'card.citizen.desc': 'మీ భాషలో ఎఐ వాయిస్ సహాయంతో మీ ఎఫ్‌ఐఆర్‌ను త్వరగా మరియు సులభంగా దాఖలు చేయండి.',
+    'card.citizen.btn': 'ఎఫ్‌ఐఆర్ దాఖలు చేయండి',
     'card.police.title': 'చట్ట అమలు',
     'card.police.desc': 'దాఖలైన ఫిర్యాదులను చూడటానికి, నిర్వహించడానికి పోలీసు పోర్టల్‌ను యాక్సెస్ చేయండి.',
     'card.police.btn': 'పోలీసు లాగిన్',
     'about.title': 'ఇది ఎలా పనిచేస్తుంది',
-    'about.desc': 'మా AI-ఆధారిత వ్యవస్థ FIR దాఖలును సరళంగా, వేగంగా మరియు అందుబాటులో ఉంచుతుంది',
-    'gallery.1': 'AI-ఆధారిత సహాయం',
+    'about.desc': 'మా ఎఐ-ఆధారిత వ్యవస్థ ఎఫ్‌ఐఆర్ దాఖలును సరళంగా, వేగంగా మరియు అందుబాటులో ఉంచుతుంది',
+    'gallery.1': 'ఎఐ-ఆధారిత సహాయం',
     'gallery.2': 'డేటా గోప్యత & భద్రత',
     'gallery.3': 'తక్షణ దాఖలు',
     'gallery.4': 'సురక్షిత క్లౌడ్ నిల్వ',
@@ -68,6 +70,7 @@ const translations = {
     'nav.contact': 'సంప్రదించండి',
   },
   hi: {
+    'nav.brand': 'प्रजा FIR',
     'hero.title': 'AI-संचालित FIR दाखिल प्रणाली',
     'hero.quote': 'देर से मिला न्याय, न्याय नहीं है।\nAI सहायता से अपनी शिकायत तुरंत दर्ज करें।',
     'hero.btn': 'अभी शिकायत दर्ज करें',
@@ -101,7 +104,7 @@ const translations = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<Language>('en');
+  const [language, setLanguage] = useState<Language>('te');
 
   const t = (key: string): string => {
     return translations[language][key as keyof typeof translations.en] || key;
