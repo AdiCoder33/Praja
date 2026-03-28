@@ -1,34 +1,64 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import VoiceAssistant from '../components/VoiceAssistant';
+import OfficerModel from '../components/OfficerModel';
+import Navbar from '../components/Navbar';
 
 export default function ComplaintPage() {
   const navigate = useNavigate();
   const { language, setLanguage } = useLanguage();
+  const [showAssistant, setShowAssistant] = useState(false);
+  const [resetCounter, setResetCounter] = useState(0);
+
+  const startComplaint = (lang: 'en' | 'te' | 'hi') => {
+    setLanguage(lang);
+    setShowAssistant(true);
+  };
+
+  const handleRestart = () => {
+    setResetCounter(prev => prev + 1);
+  };
+
+  if (!showAssistant) {
+    return (
+      <div className="language-selection-page">
+        <div className="language-modal">
+          <h2>Select Your Preferred Language</h2>
+          <p>మీకు నచ్చిన భాషను ఎంచుకోండి / आपकी पसंदीदा भाषा चुनें</p>
+          <div className="language-options">
+            <button onClick={() => startComplaint('en')} className="lang-btn">
+              <span className="flag">🇬🇧</span> English
+            </button>
+            <button onClick={() => startComplaint('te')} className="lang-btn">
+              <span className="flag">🇮🇳</span> తెలుగు
+            </button>
+            <button onClick={() => startComplaint('hi')} className="lang-btn">
+              <span className="flag">🇮🇳</span> हिंदी
+            </button>
+          </div>
+          <button onClick={() => navigate('/')} className="back-link">
+            ← Back to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="complaint-page">
-      <header className="complaint-header">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '1200px', margin: '0 auto' }}>
-          <button onClick={() => navigate('/')} className="back-button">
-            ← Back to Home
-          </button>
-          <h1>🎤 AI Voice FIR Assistant</h1>
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value as 'en' | 'te' | 'hi')}
-            className="language-select"
-            style={{ background: 'rgba(255, 255, 255, 0.9)', color: '#333' }}
-          >
-            <option value="en">🇬🇧 English</option>
-            <option value="te">🇮🇳 తెలుగు</option>
-            <option value="hi">🇮🇳 हिंदी</option>
-          </select>
-        </div>
-      </header>
+      <Navbar onRestart={handleRestart} />
+      
+      <div className="header-separator"></div>
 
-      <VoiceAssistant language={language} />
+      <main className="complaint-main-layout">
+        <div className="matter-side">
+          <VoiceAssistant language={language} resetCounter={resetCounter} />
+        </div>
+        <div className="model-side">
+          <OfficerModel />
+        </div>
+      </main>
     </div>
   );
 }
