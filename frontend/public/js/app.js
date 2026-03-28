@@ -108,7 +108,6 @@ function initSpeechRecognition() {
             speechTimeout = null;
         }, 4000); // 4 second delay
     };
-    };
 
     recognition.onerror = (event) => {
         console.error('Speech recognition error:', event.error);

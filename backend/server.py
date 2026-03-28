@@ -17,16 +17,19 @@ from app import create_app
 
 app = create_app()
 
+# Get absolute path to frontend
+FRONTEND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../frontend/public')
+
 # Serve frontend files
 @app.route('/')
 def index():
     """Serve main FIR assistant page"""
-    return send_from_directory('../frontend/public', 'fir-assistant.html')
+    return send_from_directory(FRONTEND_DIR, 'index.html')
 
 @app.route('/<path:path>')
 def serve_static(path):
     """Serve static files"""
-    return send_from_directory('../frontend/public', path)
+    return send_from_directory(FRONTEND_DIR, path)
 
 if __name__ == '__main__':
     print("🚀 Starting AI Voice FIR Assistant...")
