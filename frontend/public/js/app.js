@@ -6,6 +6,12 @@ const chatContainer = document.getElementById('chatContainer');
 const voiceButton = document.getElementById('voiceButton');
 const languageSelect = document.getElementById('languageSelect');
 const errorMessage = document.getElementById('errorMessage');
+const headerTitle = document.getElementById('headerTitle');
+const headerSubtitle = document.getElementById('headerSubtitle');
+const aiGreeting = document.getElementById('aiGreeting');
+const micHelper = document.getElementById('micHelper');
+const footerNote = document.getElementById('footerNote');
+const sendButton = document.getElementById('sendButton');
 
 // State
 let isRecording = false;
@@ -19,6 +25,76 @@ window.conversationMode = false; // Continuous conversation mode
 window.isProcessing = false; // Prevent duplicate processing
 let speechTimeout = null; // Timer for speech pause detection
 let pendingSpeech = ''; // Store speech while waiting
+let currentLanguage = 'te-IN';
+
+// UI translations
+const uiText = {
+    'en-IN': {
+        headerTitle: '🚔 AI Voice FIR Assistant',
+        headerSubtitle: 'Speak your complaint in your language',
+        aiGreeting: "Namaste! I'm your AI assistant. Please tell me about your complaint. You can speak in English, Hindi, or Telugu.",
+        inputPlaceholder: 'Type here or click mic for continuous conversation...',
+        sendButtonText: 'Send ➤',
+        micHelper: "🎤 Click mic for <strong>continuous conversation</strong> - I'll listen after each response! You can interrupt me anytime. 🔊",
+        footerNote: '💡 Powered by Sarvam AI 🇮🇳 - Natural Indian voices & language understanding',
+        micTitleStart: 'Click to start continuous conversation',
+        micTitleStop: 'Click to stop conversation',
+        listeningPlaceholder: '🎤 Listening...',
+        waitingPlaceholder: 'Got: "{text}" - waiting 4s for more...',
+        processingLabel: 'Processing...'
+    },
+    'hi-IN': {
+        headerTitle: '🚔 एआई वॉइस FIR सहायक',
+        headerSubtitle: 'अपनी भाषा में अपनी शिकायत बताएं',
+        aiGreeting: 'नमस्ते! मैं आपका एआई सहायक हूँ। कृपया अपनी शिकायत बताएं। आप हिंदी, तेलुगु या अंग्रेजी में बोल सकते हैं।',
+        inputPlaceholder: 'यहाँ टाइप करें या लगातार बातचीत के लिए माइक दबाएं...',
+        sendButtonText: 'भेजें ➤',
+        micHelper: '🎤 माइक दबाकर <strong>लगातार बातचीत</strong> करें - मैं हर उत्तर के बाद सुनूँगा! आप कभी भी रोक सकते हैं। 🔊',
+        footerNote: '💡 सरवम AI 🇮🇳 द्वारा संचालित - भारतीय भाषाओं के लिए प्राकृतिक आवाज़ें',
+        micTitleStart: 'लगातार बातचीत शुरू करें',
+        micTitleStop: 'लगातार बातचीत रोकें',
+        listeningPlaceholder: '🎤 सुन रहा हूँ...',
+        waitingPlaceholder: 'मिला: "{text}" - 4 सेकंड तक प्रतीक्षा कर रहा हूँ...',
+        processingLabel: 'प्रोसेस हो रहा है...'
+    },
+    'te-IN': {
+        headerTitle: '🚔 ఎఐ వాయిస్ ఎఫ్‌ఐఆర్ సహాయకుడు',
+        headerSubtitle: 'మీ భాషలో మీ ఫిర్యాదు చెప్పండి',
+        aiGreeting: 'నమస్తే! నేను మీ ఎఐ సహాయకుడు. మీ ఫిర్యాదు తెలుపండి. మీరు తెలుగు, హిందీ లేదా ఇంగ్లీష్ లో మాట్లాడవచ్చు.',
+        inputPlaceholder: 'ఇక్కడ టైప్ చేయండి లేదా నిరంతర సంభాషణ కోసం మైక్ నొక్కండి...',
+        sendButtonText: 'పంపండి ➤',
+        micHelper: '🎤 మైక్ నొక్కి <strong>నిరంతర సంభాషణ</strong> ప్రారంభించండి - ప్రతి సమాధానం తర్వాత నేను వింటాను! ఎప్పుడైనా ఆపవచ్చు. 🔊',
+        footerNote: '💡 సర్వమ్ ఎఐ 🇮🇳 ఆధారిత సహాయం - భారతీయ భాషలకు సహజమైన గొంతులు',
+        micTitleStart: 'నిరంతర సంభాషణ ప్రారంభించండి',
+        micTitleStop: 'నిరంతర సంభాషణ ఆపండి',
+        listeningPlaceholder: '🎤 వింటున్నాను...',
+        waitingPlaceholder: 'పొందాను: "{text}" - ఇంకో 4 సెకన్లు వేచిచూస్తున్నాను...',
+        processingLabel: 'ప్రాసెస్ జరుగుతోంది...'
+    }
+};
+
+function applyLanguage(lang) {
+    currentLanguage = lang || 'te-IN';
+    const t = uiText[currentLanguage] || uiText['te-IN'];
+
+    // Update document language hint
+    document.documentElement.lang = currentLanguage.startsWith('hi') ? 'hi' : currentLanguage.startsWith('en') ? 'en' : 'te';
+
+    if (headerTitle) headerTitle.textContent = t.headerTitle;
+    if (headerSubtitle) headerSubtitle.textContent = t.headerSubtitle;
+    if (aiGreeting) aiGreeting.textContent = t.aiGreeting;
+    const textInput = document.getElementById('textInput');
+    if (textInput) textInput.placeholder = t.inputPlaceholder;
+    if (sendButton) sendButton.textContent = t.sendButtonText;
+    if (micHelper) micHelper.innerHTML = t.micHelper;
+    if (footerNote) footerNote.textContent = t.footerNote;
+    if (voiceButton) {
+        voiceButton.title = window.conversationMode ? t.micTitleStop : t.micTitleStart;
+    }
+    if (languageSelect) {
+        languageSelect.value = currentLanguage;
+    }
+}
 
 // Initialize Speech Recognition
 function initSpeechRecognition() {
@@ -34,6 +110,7 @@ function initSpeechRecognition() {
     recognition.continuous = true; // Keep listening continuously
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
+    recognition.lang = currentLanguage;
 
     recognition.onstart = () => {
         isRecording = true;
@@ -42,7 +119,7 @@ function initSpeechRecognition() {
             voiceButton.textContent = '🔴';
         }
         const textInput = document.getElementById('textInput');
-        if (textInput) textInput.placeholder = '🎤 Listening...';
+        if (textInput) textInput.placeholder = uiText[currentLanguage].listeningPlaceholder;
     };
 
     recognition.onresult = (event) => {
@@ -53,7 +130,7 @@ function initSpeechRecognition() {
         // Show interim results
         if (!event.results[0].isFinal) {
             const textInput = document.getElementById('textInput');
-            if (textInput) textInput.placeholder = `Hearing: "${transcript}"`;
+            if (textInput) textInput.placeholder = uiText[currentLanguage].listeningPlaceholder;
             return; // Don't process interim results
         }
 
@@ -86,7 +163,7 @@ function initSpeechRecognition() {
 
         // Show waiting message
         const textInput = document.getElementById('textInput');
-        if (textInput) textInput.placeholder = `Got: "${pendingSpeech}" - waiting 4s for more...`;
+        if (textInput) textInput.placeholder = uiText[currentLanguage].waitingPlaceholder.replace('{text}', pendingSpeech);
 
         // Wait 4 seconds before processing
         speechTimeout = setTimeout(() => {
@@ -100,7 +177,7 @@ function initSpeechRecognition() {
             }
 
             // Process the accumulated speech
-            if (textInput) textInput.placeholder = 'Processing...';
+            if (textInput) textInput.placeholder = uiText[currentLanguage].processingLabel;
             handleUserSpeech(pendingSpeech);
 
             // Clear pending speech
@@ -139,7 +216,7 @@ function initSpeechRecognition() {
                 // Double-check before restarting
                 if (window.conversationMode && !window.isProcessing) {
                     try {
-                        recognition.lang = languageSelect.value;
+                        recognition.lang = currentLanguage;
                         recognition.start();
                         console.log('🎤 Recognition auto-restarted');
                     } catch (error) {
@@ -237,7 +314,7 @@ async function handleUserSpeech(text) {
 
 // Send message to AI backend
 async function sendToAI(userMessage) {
-    const language = languageSelect.value;
+    const language = currentLanguage;
 
     // Create abort controller for timeout
     const controller = new AbortController();
@@ -334,7 +411,7 @@ function speakText(text) {
     const utterance = new SpeechSynthesisUtterance(text);
 
     // Set language based on selection
-    const language = languageSelect.value;
+    const language = currentLanguage;
     utterance.lang = language;
     utterance.rate = 0.85; // Slower for Indian languages
     utterance.pitch = 1.0;
@@ -402,7 +479,7 @@ function speakText(text) {
         window.isAISpeaking = false;
         window.isProcessing = false; // Reset processing flag
         const textInput = document.getElementById('textInput');
-        if (textInput) textInput.placeholder = 'Type your message or click mic...';
+        if (textInput) textInput.placeholder = uiText[currentLanguage].inputPlaceholder;
 
         console.log('✅ Browser TTS finished, waiting before listening...');
 
@@ -437,26 +514,29 @@ function toggleRecording() {
         }
     }
 
+    const t = uiText[currentLanguage] || uiText['te-IN'];
+
     if (window.conversationMode) {
         // Stop conversation mode
         window.conversationMode = false;
         recognition.stop();
         stopRecording();
         console.log('🛑 Conversation mode stopped');
+        if (voiceButton) voiceButton.title = t.micTitleStart;
     } else {
         // Start conversation mode
         window.conversationMode = true;
         try {
-            recognition.lang = languageSelect.value;
+            recognition.lang = currentLanguage;
             recognition.start();
             isRecording = true;
             if (voiceButton) {
                 voiceButton.classList.add('recording');
                 voiceButton.textContent = '🔴';
-                voiceButton.title = 'Click to stop conversation';
+                voiceButton.title = t.micTitleStop;
             }
             const textInput = document.getElementById('textInput');
-            if (textInput) textInput.placeholder = '🎤 Listening continuously... (Click mic to stop)';
+            if (textInput) textInput.placeholder = uiText[currentLanguage].inputPlaceholder;
             console.log('🎤 Conversation mode started - Always listening!');
         } catch (error) {
             console.error('Failed to start recognition:', error);
@@ -481,10 +561,11 @@ function stopRecording() {
     if (voiceButton) {
         voiceButton.classList.remove('recording');
         voiceButton.textContent = '🎤';
-        voiceButton.title = 'Click to start continuous conversation';
+        const t = uiText[currentLanguage] || uiText['te-IN'];
+        voiceButton.title = t.micTitleStart;
     }
     const textInput = document.getElementById('textInput');
-    if (textInput) textInput.placeholder = 'Type your message or click mic to start conversation...';
+    if (textInput) textInput.placeholder = uiText[currentLanguage].inputPlaceholder;
 }
 
 // Show error message
@@ -500,6 +581,16 @@ function showError(message) {
 // Event Listeners
 if (voiceButton) {
     voiceButton.addEventListener('click', toggleRecording);
+}
+
+if (languageSelect) {
+    languageSelect.addEventListener('change', () => {
+        currentLanguage = languageSelect.value;
+        applyLanguage(currentLanguage);
+        if (recognition) {
+            recognition.lang = currentLanguage;
+        }
+    });
 }
 
 // Check browser support and internet
@@ -522,7 +613,7 @@ async function checkSystem() {
 
     // Check server connection
     try {
-        const response = await fetch('http://localhost:5000/health', { timeout: 3000 });
+        const response = await fetch('/health');
         if (response.ok) {
             checks.push('✅ Server connected');
         }
@@ -544,6 +635,12 @@ window.addEventListener('load', async () => {
         };
     }
 
+    // Ensure default language is Telugu unless user picked something else
+    if (languageSelect) {
+        currentLanguage = languageSelect.value || 'te-IN';
+    }
+    applyLanguage(currentLanguage);
+
     // Run system check
     const checks = await checkSystem();
 
@@ -553,13 +650,6 @@ window.addEventListener('load', async () => {
     } else {
         console.log('Speech recognition not supported');
         if (voiceButton) voiceButton.style.display = 'none';
-    }
-});
-
-// Handle language change
-languageSelect.addEventListener('change', () => {
-    if (recognition) {
-        recognition.lang = languageSelect.value;
     }
 });
 

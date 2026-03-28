@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="te">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -28,6 +28,13 @@
             padding: 60px 40px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             text-align: center;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
         }
 
         h1 {
@@ -95,46 +102,131 @@
             font-size: 14px;
             color: #888;
         }
+
+        .lang-select {
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 2px solid #667eea;
+            color: #667eea;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🇮🇳 Praja</h1>
-        <p class="subtitle">AI-Powered FIR Assistant for India</p>
+        <div class="topbar">
+            <h1 id="homeTitle">🇮🇳 Praja</h1>
+            <select id="homeLanguage" class="lang-select" aria-label="Select language">
+                <option value="te">తెలుగు (Telugu)</option>
+                <option value="hi">हिंदी (Hindi)</option>
+                <option value="en">English</option>
+            </select>
+        </div>
+        <p class="subtitle" id="homeSubtitle">AI-Powered FIR Assistant for India</p>
 
         <div class="features">
             <div class="feature">
                 <div class="feature-icon">🎤</div>
-                <div class="feature-title">Voice Input</div>
-                <div class="feature-desc">Speak naturally in your language</div>
+                <div class="feature-title" id="featVoiceTitle">Voice Input</div>
+                <div class="feature-desc" id="featVoiceDesc">Speak naturally in your language</div>
             </div>
 
             <div class="feature">
                 <div class="feature-icon">🤖</div>
-                <div class="feature-title">AI Assistant</div>
-                <div class="feature-desc">Smart conversation flow</div>
+                <div class="feature-title" id="featAITitle">AI Assistant</div>
+                <div class="feature-desc" id="featAIDesc">Smart conversation flow</div>
             </div>
 
             <div class="feature">
                 <div class="feature-icon">🗣️</div>
-                <div class="feature-title">Multi-Language</div>
-                <div class="feature-desc">Telugu, Hindi, English</div>
+                <div class="feature-title" id="featLangTitle">Multi-Language</div>
+                <div class="feature-desc" id="featLangDesc">Telugu, Hindi, English</div>
             </div>
 
             <div class="feature">
                 <div class="feature-icon">🔊</div>
-                <div class="feature-title">Voice Response</div>
-                <div class="feature-desc">Natural Indian voices</div>
+                <div class="feature-title" id="featVoiceRespTitle">Voice Response</div>
+                <div class="feature-desc" id="featVoiceRespDesc">Natural Indian voices</div>
             </div>
         </div>
 
-        <a href="/fir-assistant.html" class="cta-button">
+        <a href="/fir-assistant.html" class="cta-button" id="ctaButton">
             Start Filing FIR →
         </a>
 
-        <div class="footer">
+        <div class="footer" id="homeFooter">
             Powered by Sarvam AI 🇮🇳 • Made in India
         </div>
     </div>
+
+    <script>
+        const homeText = {
+            te: {
+                title: '🇮🇳 ప్రజా ఎఫ్‌ఐఆర్',
+                subtitle: 'ఎఐ ఆధారిత ఎఫ్‌ఐఆర్ సహాయకుడు',
+                voiceTitle: 'వాయిస్ ఇన్‌పుట్',
+                voiceDesc: 'మీ భాషలో సహజంగా మాట్లాడండి',
+                aiTitle: 'ఎఐ సహాయకుడు',
+                aiDesc: 'స్మార్ట్ సంభాషణ ప్రవాహం',
+                langTitle: 'బహుభాషా మద్దతు',
+                langDesc: 'తెలుగు, హిందీ, ఇంగ్లీష్',
+                voiceRespTitle: 'వాయిస్ సమాధానం',
+                voiceRespDesc: 'సహజమైన భారతీయ గొంతులు',
+                cta: 'ఎఫ్‌ఐఆర్ దాఖలు చేయండి →',
+                footer: 'సర్వమ్ AI 🇮🇳 ఆధారితం • భారతదేశంలో తయారు'
+            },
+            hi: {
+                title: '🇮🇳 प्रजा FIR',
+                subtitle: 'AI आधारित FIR सहायक',
+                voiceTitle: 'वॉयस इनपुट',
+                voiceDesc: 'अपनी भाषा में स्वाभाविक रूप से बोलें',
+                aiTitle: 'AI सहायक',
+                aiDesc: 'स्मार्ट बातचीत प्रवाह',
+                langTitle: 'बहुभाषी समर्थन',
+                langDesc: 'तेलुगु, हिंदी, अंग्रेज़ी',
+                voiceRespTitle: 'वॉयस प्रतिक्रिया',
+                voiceRespDesc: 'प्राकृतिक भारतीय आवाज़ें',
+                cta: 'FIR दर्ज करें →',
+                footer: 'सरवम AI 🇮🇳 द्वारा संचालित • भारत में निर्मित'
+            },
+            en: {
+                title: '🇮🇳 Praja FIR',
+                subtitle: 'AI-Powered FIR Assistant',
+                voiceTitle: 'Voice Input',
+                voiceDesc: 'Speak naturally in your language',
+                aiTitle: 'AI Assistant',
+                aiDesc: 'Smart conversation flow',
+                langTitle: 'Multi-Language',
+                langDesc: 'Telugu, Hindi, English',
+                voiceRespTitle: 'Voice Response',
+                voiceRespDesc: 'Natural Indian voices',
+                cta: 'Start Filing FIR →',
+                footer: 'Powered by Sarvam AI 🇮🇳 • Made in India'
+            }
+        };
+
+        const homeLanguage = document.getElementById('homeLanguage');
+        const setHomeLang = (lang) => {
+            const t = homeText[lang] || homeText.te;
+            document.documentElement.lang = lang === 'en' ? 'en' : lang === 'hi' ? 'hi' : 'te';
+            document.getElementById('homeTitle').textContent = t.title;
+            document.getElementById('homeSubtitle').textContent = t.subtitle;
+            document.getElementById('featVoiceTitle').textContent = t.voiceTitle;
+            document.getElementById('featVoiceDesc').textContent = t.voiceDesc;
+            document.getElementById('featAITitle').textContent = t.aiTitle;
+            document.getElementById('featAIDesc').textContent = t.aiDesc;
+            document.getElementById('featLangTitle').textContent = t.langTitle;
+            document.getElementById('featLangDesc').textContent = t.langDesc;
+            document.getElementById('featVoiceRespTitle').textContent = t.voiceRespTitle;
+            document.getElementById('featVoiceRespDesc').textContent = t.voiceRespDesc;
+            document.getElementById('ctaButton').textContent = t.cta;
+            document.getElementById('homeFooter').textContent = t.footer;
+        };
+
+        homeLanguage.addEventListener('change', () => setHomeLang(homeLanguage.value));
+        // Default to Telugu
+        homeLanguage.value = 'te';
+        setHomeLang('te');
+    </script>
 </body>
 </html>

@@ -1,4 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 
 export default function Navbar({ onRestart }: { onRestart?: () => void }) {
@@ -8,7 +10,7 @@ export default function Navbar({ onRestart }: { onRestart?: () => void }) {
   const isComplaintPage = location.pathname === '/complaint';
 
   return (
-    <nav className="navbar">
+    <nav className={`navbar ${scrolled ? 'navbar-scrolled' : ''}`}>
       <div className="nav-container">
         <div className="nav-brand" onClick={() => navigate('/')}>
           <img src="/police_logo_v4.png" alt="Police Logo" width="40" />
