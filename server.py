@@ -7,6 +7,15 @@ from gtts import gTTS
 import uuid
 import base64
 
+# Try to import Sarvam AI (fallback to gTTS if not available)
+try:
+    from sarvam_tts import generate_speech_sarvam
+    USE_SARVAM = True
+    print("✅ Using Sarvam AI for TTS (Better Indian language support!)")
+except:
+    USE_SARVAM = False
+    print("⚠️ Sarvam AI not configured, using gTTS")
+
 # Load environment variables
 load_dotenv()
 
@@ -101,28 +110,32 @@ def chat():
         # Generate audio for the response
         audio_base64 = None
         try:
-            # Map language codes for gTTS
-            tts_lang_map = {
-                'en-IN': 'en',
-                'hi-IN': 'hi',
-                'te-IN': 'te'
-            }
-            tts_lang = tts_lang_map.get(language_code, 'en')
+            if USE_SARVAM:
+                # Use Sarvam AI TTS (better for Indian languages)
+                audio_base64 = generate_speech_sarvam(ai_response, language_code)
+            else:
+                # Fallback to gTTS
+                tts_lang_map = {
+                    'en-IN': 'en',
+                    'hi-IN': 'hi',
+                    'te-IN': 'te'
+                }
+                tts_lang = tts_lang_map.get(language_code, 'en')
 
-            # Generate speech
-            tts = gTTS(text=ai_response, lang=tts_lang, slow=False)
+                # Generate speech
+                tts = gTTS(text=ai_response, lang=tts_lang, slow=False)
 
-            # Save to temporary file
-            audio_file = f"temp_audio_{uuid.uuid4()}.mp3"
-            tts.save(audio_file)
+                # Save to temporary file
+                audio_file = f"temp_audio_{uuid.uuid4()}.mp3"
+                tts.save(audio_file)
 
-            # Read and encode as base64
-            with open(audio_file, 'rb') as f:
-                audio_data = f.read()
-                audio_base64 = base64.b64encode(audio_data).decode('utf-8')
+                # Read and encode as base64
+                with open(audio_file, 'rb') as f:
+                    audio_data = f.read()
+                    audio_base64 = base64.b64encode(audio_data).decode('utf-8')
 
-            # Delete temp file
-            os.remove(audio_file)
+                # Delete temp file
+                os.remove(audio_file)
 
         except Exception as audio_error:
             print(f"Audio generation error: {str(audio_error)}")
