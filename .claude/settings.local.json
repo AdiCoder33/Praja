@@ -46,7 +46,11 @@
       "Bash(curl -k -X POST https://localhost:5000/api/chat -H \"Content-Type: application/json\" -d '{\"\"message\"\":\"\"test\"\",\"\"language\"\":\"\"en-IN\"\",\"\"history\"\":[]}')",
       "Bash(git check-ignore:*)",
       "Bash(git add:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(curl -k -m 5 -s https://localhost:5000/health)",
+      "Bash(curl -k -m 5 https://localhost:5000/health)",
+      "Bash(curl -k -m 10 -X POST https://localhost:5000/api/chat -H \"Content-Type: application/json\" -d '{\"\"message\"\":\"\"test\"\",\"\"language\"\":\"\"en-IN\"\",\"\"history\"\":[]}')",
+      "Bash(curl -k -m 30 -X POST https://localhost:5000/api/chat -H \"Content-Type: application/json\" -d '{\"\"\"\"message\"\"\"\":\"\"\"\"My phone was stolen\"\"\"\",\"\"\"\"language\"\"\"\":\"\"\"\"en-IN\"\"\"\",\"\"\"\"history\"\"\"\":[{\"\"\"\"role\"\"\"\":\"\"\"\"user\"\"\"\",\"\"\"\"parts\"\"\"\":[{\"\"\"\"text\"\"\"\":\"\"\"\"test\"\"\"\"}]},{\"\"\"\"role\"\"\"\":\"\"\"\"model\"\"\"\",\"\"\"\"parts\"\"\"\":[{\"\"\"\"text\"\"\"\":\"\"\"\"hello\"\"\"\"}]}]}')"
     ]
   }
 }
