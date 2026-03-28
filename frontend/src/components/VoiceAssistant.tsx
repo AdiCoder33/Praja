@@ -33,6 +33,7 @@ export default function VoiceAssistant({ language }: VoiceAssistantProps) {
   const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const isAISpeakingRef = useRef(false);
+  const conversationModeRef = useRef(false); // Use ref for current value
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   // Initialize speech recognition
@@ -50,6 +51,7 @@ export default function VoiceAssistant({ language }: VoiceAssistantProps) {
     recognition.lang = LANGUAGE_MAP[language] || 'en-IN';
 
     recognition.onstart = () => {
+      console.log('✅ Recognition started successfully');
       setIsListening(true);
       setPlaceholder('🎤 Listening...');
     };
@@ -95,6 +97,11 @@ export default function VoiceAssistant({ language }: VoiceAssistantProps) {
         setPendingSpeech('');
         speechTimeoutRef.current = null;
 
+        // Set processing state BEFORE stopping recognition
+        // This prevents onend from restarting too early
+        setIsProcessing(true);
+        setPlaceholder('Processing...');
+
         try {
           recognition.stop();
         } catch (e) {
@@ -114,15 +121,11 @@ export default function VoiceAssistant({ language }: VoiceAssistantProps) {
     };
 
     recognition.onend = () => {
-      if (conversationMode && !isAISpeakingRef.current && !isProcessing) {
-        setTimeout(() => {
-          try {
-            recognition.start();
-          } catch (e) {
-            console.log('Could not restart recognition');
-          }
-        }, 500);
-      } else if (!conversationMode) {
+      console.log('Recognition ended. ConversationMode:', conversationModeRef.current, 'isProcessing:', isProcessing, 'isAISpeaking:', isAISpeakingRef.current);
+
+      // Only update UI state when stopping, don't auto-restart
+      // Restarts are now handled explicitly by restartListening()
+      if (!conversationModeRef.current) {
         setIsListening(false);
         setPlaceholder('Type here or click mic...');
       }
@@ -139,7 +142,7 @@ export default function VoiceAssistant({ language }: VoiceAssistantProps) {
         }
       }
     };
-  }, [language, conversationMode, pendingSpeech, isProcessing]);
+  }, [language]); // Only recreate when language changes
 
   const stopAISpeech = () => {
     isAISpeakingRef.current = false;
@@ -150,6 +153,26 @@ export default function VoiceAssistant({ language }: VoiceAssistantProps) {
     }
 
     console.log('AI speech interrupted');
+  };
+
+  const restartListening = () => {
+    console.log('restartListening called. ConversationMode:', conversationModeRef.current);
+    if (conversationModeRef.current && recognitionRef.current) {
+      setPlaceholder('Restarting microphone...');
+      setTimeout(() => {
+        try {
+          console.log('Attempting to restart recognition...');
+          recognitionRef.current.start();
+          console.log('Recognition start() called successfully');
+        } catch (e) {
+          console.error('Failed to restart recognition:', e);
+          setPlaceholder('⚠️ Mic failed - click mic button to retry');
+          setIsListening(false);
+        }
+      }, 1500);
+    } else {
+      console.log('Not restarting - conversationMode is false or no recognitionRef');
+    }
   };
 
   const handleUserSpeech = async (text: string) => {
@@ -186,6 +209,9 @@ export default function VoiceAssistant({ language }: VoiceAssistantProps) {
       // Play audio if available
       if (data.audio) {
         playAudio(data.audio);
+      } else {
+        // No audio - restart listening immediately
+        restartListening();
       }
     } catch (error) {
       console.error('Error:', error);
@@ -193,9 +219,10 @@ export default function VoiceAssistant({ language }: VoiceAssistantProps) {
         ...prev,
         { text: 'Sorry, I encountered an error. Please try again.', type: 'ai' },
       ]);
+      // On error - restart listening
+      restartListening();
     } finally {
       setIsProcessing(false);
-      setPlaceholder('🎤 Listening...');
     }
   };
 
@@ -217,23 +244,16 @@ export default function VoiceAssistant({ language }: VoiceAssistantProps) {
         URL.revokeObjectURL(audioUrl);
         isAISpeakingRef.current = false;
         currentAudioRef.current = null;
-
-        // Auto-restart listening
-        if (conversationMode && recognitionRef.current) {
-          setTimeout(() => {
-            try {
-              recognitionRef.current.start();
-            } catch (e) {
-              console.log('Could not restart');
-            }
-          }, 1500);
-        }
+        // Auto-restart listening after audio finishes
+        restartListening();
       };
 
       audio.onerror = () => {
         URL.revokeObjectURL(audioUrl);
         isAISpeakingRef.current = false;
         currentAudioRef.current = null;
+        // Restart listening even if audio fails
+        restartListening();
       };
 
       isAISpeakingRef.current = true;
@@ -242,6 +262,8 @@ export default function VoiceAssistant({ language }: VoiceAssistantProps) {
     } catch (error) {
       console.error('Audio playback error:', error);
       isAISpeakingRef.current = false;
+      // Restart listening if audio playback fails
+      restartListening();
     }
   };
 
@@ -249,6 +271,9 @@ export default function VoiceAssistant({ language }: VoiceAssistantProps) {
     if (conversationMode) {
       // Stop
       setConversationMode(false);
+      conversationModeRef.current = false; // Update ref
+      setIsListening(false);
+      setPlaceholder('Type here or click mic...');
       if (recognitionRef.current) {
         try {
           recognitionRef.current.stop();
@@ -256,16 +281,21 @@ export default function VoiceAssistant({ language }: VoiceAssistantProps) {
           // Ignore
         }
       }
-      setIsListening(false);
-      setPlaceholder('Type here or click mic...');
     } else {
       // Start
       setConversationMode(true);
+      conversationModeRef.current = true; // Update ref
+      setIsListening(true); // Immediate feedback
+      setPlaceholder('Starting microphone...');
       if (recognitionRef.current) {
         try {
           recognitionRef.current.start();
         } catch (e) {
           console.error('Failed to start:', e);
+          setIsListening(false);
+          setConversationMode(false);
+          conversationModeRef.current = false; // Update ref
+          setPlaceholder('Type here or click mic...');
           alert('Could not start microphone. Please check permissions.');
         }
       }

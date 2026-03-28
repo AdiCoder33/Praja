@@ -305,6 +305,11 @@ body {
   color: white;
 }
 
+.complaint-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
 .back-button {
   background: rgba(255, 255, 255, 0.2);
   color: white;
