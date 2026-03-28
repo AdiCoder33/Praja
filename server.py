@@ -18,7 +18,9 @@ if not GEMINI_API_KEY:
 genai.configure(api_key=GEMINI_API_KEY)
 
 # System prompt for FIR assistant
-SYSTEM_PROMPT = """You are an AI assistant helping people file FIR (First Information Report) in India.
+SYSTEM_PROMPT_TEMPLATE = """You are an AI assistant helping people file FIR (First Information Report) in India.
+
+IMPORTANT: Respond in {language} language only. All your responses must be in {language}.
 
 Your role:
 1. Have a natural, empathetic conversation with the complainant
@@ -60,18 +62,29 @@ def chat():
     try:
         data = request.json
         user_message = data.get('message', '')
-        language = data.get('language', 'en-IN')
+        language_code = data.get('language', 'en-IN')
         history = data.get('history', [])
+
+        # Map language codes to language names
+        language_map = {
+            'en-IN': 'English',
+            'hi-IN': 'Hindi (हिंदी)',
+            'te-IN': 'Telugu (తెలుగు)'
+        }
+        language_name = language_map.get(language_code, 'English')
 
         # Initialize model (using lite version for lower quota usage)
         model = genai.GenerativeModel('models/gemini-flash-lite-latest')
+
+        # Create system prompt with selected language
+        system_prompt = SYSTEM_PROMPT_TEMPLATE.format(language=language_name)
 
         # Create chat with system instruction
         chat = model.start_chat(history=[])
 
         # Send system prompt first if history is empty
         if not history:
-            chat.send_message(SYSTEM_PROMPT)
+            chat.send_message(system_prompt)
         else:
             # Rebuild chat history
             for msg in history:

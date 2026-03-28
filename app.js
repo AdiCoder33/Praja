@@ -193,20 +193,35 @@ function speakText(text) {
     // Set language based on selection
     const language = languageSelect.value;
     utterance.lang = language;
-    utterance.rate = 1.0;
+    utterance.rate = 0.9; // Slightly slower for better clarity
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
 
-    // Get appropriate voice
+    // Get appropriate voice for the selected language
     const voices = speechSynthesis.getVoices();
-    const voice = voices.find(v => v.lang.startsWith(language.split('-')[0]));
+
+    // Try to find the best voice for the language
+    let voice = voices.find(v => v.lang === language);
+    if (!voice) {
+        // Fallback to language family (e.g., 'te' for 'te-IN')
+        const langFamily = language.split('-')[0];
+        voice = voices.find(v => v.lang.startsWith(langFamily));
+    }
+
     if (voice) {
         utterance.voice = voice;
+        console.log('Using voice:', voice.name, voice.lang);
+    } else {
+        console.log('No voice found for', language, '- using default');
     }
 
     utterance.onend = () => {
         const textInput = document.getElementById('textInput');
         if (textInput) textInput.placeholder = 'Type your message or click mic...';
+    };
+
+    utterance.onerror = (event) => {
+        console.error('Speech synthesis error:', event);
     };
 
     speechSynthesis.speak(utterance);
