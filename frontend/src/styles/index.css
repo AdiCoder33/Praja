@@ -435,11 +435,26 @@ body {
   border-radius: 24px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
   text-align: center;
-  max-width: 650px; /* Widened strictly to accommodate a single horizontal row seamlessly */
+  max-width: 650px;
   width: 100%;
-  animation: fadeInUp 0.6s ease-out;
+  animation: fadeInUp 0.6s ease-out, cardGlow 3s ease-in-out infinite;
   position: relative;
-  overflow: hidden; /* Locks the watermark safely inside curved edges */
+  overflow: hidden;
+}
+
+@keyframes cardGlow {
+  0%, 100% {
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.1),
+      0 0 20px rgba(102, 126, 234, 0.15),
+      0 0 40px rgba(16, 185, 129, 0.08);
+  }
+  50% {
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.12),
+      0 0 35px rgba(102, 126, 234, 0.35),
+      0 0 70px rgba(16, 185, 129, 0.2);
+  }
 }
 
 .language-modal::before {
@@ -495,11 +510,14 @@ body {
 }
 
 .lang-btn:hover {
-  border-color: #667eea;
-  background: linear-gradient(to right, #ffffff, #f0f4ff);
-  transform: scale(1.05) translateY(-5px);
-  box-shadow: 0 15px 30px rgba(102, 126, 234, 0.2);
-  color: #667eea;
+  border-color: transparent;
+  background: linear-gradient(135deg, #667eea 0%, #10b981 100%);
+  transform: translateY(-8px) scale(1.06);
+  box-shadow:
+    0 16px 40px rgba(102, 126, 234, 0.35),
+    0 0 0 3px rgba(16, 185, 129, 0.25); /* Glowing ring effect */
+  color: white;
+  letter-spacing: 0.5px;
 }
 
 .lang-btn:active {

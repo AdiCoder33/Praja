@@ -15,32 +15,45 @@ export default function CircularGallery({
   textColor = '#1e293b'
 }: CircularGalleryProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
+  const timeRef = useRef(0);
 
-  // Duplicate items array a few times to ensure infinite smooth scrolling
+  // Duplicate items for seamless infinite loop
   const duplicatedItems = [...items, ...items, ...items, ...items];
 
-  // Auto-scroll logic (faster)
+  // Combined auto-scroll + sine wave curve animation
   useEffect(() => {
-    if (isDragging) return;
-    
     let animationId: number;
-    const scroll = () => {
-      if (scrollRef.current) {
-        scrollRef.current.scrollLeft += 1.5; // Fast sideways panning
-        
+
+    const animate = () => {
+      timeRef.current += 0.018; // Controls wave speed
+
+      // Auto-scroll horizontal pan
+      if (scrollRef.current && !isDragging) {
+        scrollRef.current.scrollLeft += 1.5;
         const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth;
-        // If we reach near the end of our cloned arrays, silently snap back to the start
         if (scrollRef.current.scrollLeft >= maxScroll - 500) {
           scrollRef.current.scrollLeft = 0;
         }
       }
-      animationId = requestAnimationFrame(scroll);
+
+      // Apply sine wave vertical offset to each card
+      cardRefs.current.forEach((card, index) => {
+        if (!card) return;
+        // Each card gets a phase offset based on index → creates wave shape
+        const phase = index * 0.5;
+        const yOffset = Math.sin(timeRef.current + phase) * 22; // 22px wave amplitude
+        const scale = 0.92 + Math.sin(timeRef.current + phase) * 0.06; // subtle scale pulse
+        card.style.transform = `translateY(${yOffset}px) scale(${scale})`;
+      });
+
+      animationId = requestAnimationFrame(animate);
     };
-    
-    animationId = requestAnimationFrame(scroll);
+
+    animationId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animationId);
   }, [isDragging]);
 
@@ -52,19 +65,14 @@ export default function CircularGallery({
     setScrollLeft(scrollRef.current.scrollLeft);
   };
 
-  const handleMouseLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
+  const handleMouseLeave = () => setIsDragging(false);
+  const handleMouseUp = () => setIsDragging(false);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging || !scrollRef.current) return;
     e.preventDefault();
     const x = e.pageX - scrollRef.current.offsetLeft;
-    const walk = (x - startX) * 2; // Scroll-fast multiplier
+    const walk = (x - startX) * 2;
     scrollRef.current.scrollLeft = scrollLeft - walk;
   };
 
@@ -73,12 +81,13 @@ export default function CircularGallery({
       className="marquee-gallery-scene"
       style={{
         width: '100vw',
-        height: '240px',
+        height: '280px', /* Extra height to accommodate wave vertical movement */
         display: 'flex',
         alignItems: 'center',
         marginLeft: 'calc(-50vw + 50%)',
         position: 'relative',
         background: '#f1f5f9',
+        overflow: 'hidden',
       }}
     >
       <div
@@ -90,16 +99,18 @@ export default function CircularGallery({
         style={{
           display: 'flex',
           gap: '20px',
-          overflowX: 'hidden', /* Hidden scrollbar, handled by JS */
+          overflowX: 'hidden',
           width: '100%',
           cursor: isDragging ? 'grabbing' : 'grab',
-          padding: '0 20px',
+          padding: '30px 20px', /* Vertical padding for wave room */
+          alignItems: 'center',
         }}
         className="no-scrollbar"
       >
         {duplicatedItems.map((item, index) => (
           <div
             key={index}
+            ref={el => { cardRefs.current[index] = el; }}
             style={{
               width: '140px',
               height: '180px',
@@ -109,16 +120,18 @@ export default function CircularGallery({
               alignItems: 'center',
               flexShrink: 0,
               padding: '8px 0',
-              pointerEvents: 'none', /* Prevent dragging image directly */
-              userSelect: 'none'
+              pointerEvents: 'none',
+              userSelect: 'none',
+              willChange: 'transform', /* GPU-accelerated smooth curve */
+              transition: 'transform 0.05s linear',
             }}
           >
-            <div 
-              style={{ 
-                width: '100%', 
+            <div
+              style={{
+                width: '100%',
                 height: '100px',
-                overflow: 'hidden', 
-                borderRadius: '10px', 
+                overflow: 'hidden',
+                borderRadius: '10px',
                 boxShadow: '0 6px 12px rgba(0,0,0,0.08)',
               }}
             >
@@ -134,7 +147,7 @@ export default function CircularGallery({
                 draggable={false}
               />
             </div>
-            
+
             <div
               style={{
                 height: '60px',
@@ -147,7 +160,7 @@ export default function CircularGallery({
                 letterSpacing: '-0.3px',
                 marginTop: '0.75rem',
                 textAlign: 'center',
-                lineHeight: 1.2
+                lineHeight: 1.2,
               }}
             >
               {item.text}
@@ -156,13 +169,8 @@ export default function CircularGallery({
         ))}
       </div>
       <style>{`
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;  /* IE and Edge */
-          scrollbar-width: none;  /* Firefox */
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </div>
   );
