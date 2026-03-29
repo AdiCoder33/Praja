@@ -201,7 +201,6 @@ body {
   background: linear-gradient(135deg, #0A1930 0%, #0f172a 100%); /* Hero matching background */
   border-radius: 50%; /* Blend edges */
   transform: translateX(25px); /* Move slightly right */
-  /* Animation removed per request */
 }
 
 /* Scroll Banner */
