@@ -30,11 +30,17 @@ export default function VoiceAssistant({ language }: VoiceAssistantProps) {
   const [placeholder, setPlaceholder] = useState('Type here or click mic for continuous conversation...');
 
   const recognitionRef = useRef<any>(null);
-  const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const speechTimeoutRef = useRef<number | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const isAISpeakingRef = useRef(false);
   const conversationModeRef = useRef(false); // Use ref for current value
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const [conversationHistory, setConversationHistory] = useState<any[]>([]);
+
+  // Store conversation history globally for PDF generation
+  useEffect(() => {
+    (window as any).conversationHistory = conversationHistory;
+  }, [conversationHistory]);
 
   // Initialize speech recognition
   useEffect(() => {
@@ -195,7 +201,7 @@ export default function VoiceAssistant({ language }: VoiceAssistantProps) {
         body: JSON.stringify({
           message: text,
           language: LANGUAGE_MAP[language],
-          history: [],
+          history: conversationHistory,
         }),
       });
 
@@ -205,6 +211,13 @@ export default function VoiceAssistant({ language }: VoiceAssistantProps) {
 
       // Add AI response
       setMessages((prev) => [...prev, { text: data.response, type: 'ai' }]);
+
+      // Update conversation history
+      setConversationHistory((prev) => [
+        ...prev,
+        { role: 'user', parts: [{ text }] },
+        { role: 'model', parts: [{ text: data.response }] },
+      ]);
 
       // Play audio if available
       if (data.audio) {

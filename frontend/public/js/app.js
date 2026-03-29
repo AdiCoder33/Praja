@@ -203,6 +203,11 @@ async function handleUserSpeech(text) {
         // Add AI response to chat
         addMessage(data.response, 'ai');
 
+        // Check if FIR is complete and PDF is ready
+        if (data.fir_complete && data.pdf_filename) {
+            showPDFDownloadButton(data.pdf_filename);
+        }
+
         // Mark AI as speaking
         window.isAISpeaking = true;
 
@@ -497,6 +502,96 @@ function showError(message) {
     }, 5000);
 }
 
+// Show PDF download button
+function showPDFDownloadButton(pdfFilename, isComplete = true, missingFields = []) {
+    // Create a special message with download button
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message ai';
+
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+
+    if (isComplete) {
+        contentDiv.style.backgroundColor = '#e8f5e9';
+        contentDiv.style.borderLeft = '4px solid #4caf50';
+    } else {
+        contentDiv.style.backgroundColor = '#fff3e0';
+        contentDiv.style.borderLeft = '4px solid #ff9800';
+    }
+
+    // Message text
+    const textDiv = document.createElement('div');
+    textDiv.style.marginBottom = '10px';
+
+    if (isComplete) {
+        textDiv.innerHTML = '<strong>✅ FIR Details Collected Successfully!</strong><br>Your FIR document is ready for download.';
+    } else {
+        textDiv.innerHTML = '<strong>⚠️ FIR PDF Generated</strong><br>Some fields may be incomplete. Continue the conversation to fill missing details.';
+
+        if (missingFields && missingFields.length > 0) {
+            textDiv.innerHTML += `<br><small style="color: #666;">Missing: ${missingFields.join(', ').replace(/_/g, ' ')}</small>`;
+        }
+    }
+
+    contentDiv.appendChild(textDiv);
+
+    // Download button
+    const downloadBtn = document.createElement('a');
+    downloadBtn.href = `/api/fir/download/${pdfFilename}`;
+    downloadBtn.download = pdfFilename;
+    downloadBtn.className = 'pdf-download-btn';
+    downloadBtn.innerHTML = '📄 Download FIR PDF';
+    downloadBtn.style.cssText = `
+        display: inline-block;
+        padding: 10px 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 25px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    `;
+
+    downloadBtn.onmouseover = () => {
+        downloadBtn.style.transform = 'scale(1.05)';
+        downloadBtn.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.6)';
+    };
+
+    downloadBtn.onmouseout = () => {
+        downloadBtn.style.transform = 'scale(1)';
+        downloadBtn.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+    };
+
+    contentDiv.appendChild(downloadBtn);
+    messageDiv.appendChild(contentDiv);
+    chatContainer.appendChild(messageDiv);
+
+    // Scroll to bottom
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    // Also show a success notification
+    const successMsg = document.createElement('div');
+    successMsg.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #4caf50;
+        color: white;
+        padding: 15px 25px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 1000;
+        animation: slideIn 0.3s ease;
+    `;
+    successMsg.textContent = '✅ FIR PDF Generated!';
+    document.body.appendChild(successMsg);
+
+    setTimeout(() => {
+        successMsg.remove();
+    }, 5000);
+}
+
 // Event Listeners
 if (voiceButton) {
     voiceButton.addEventListener('click', toggleRecording);
@@ -578,4 +673,82 @@ async function sendTextMessage() {
 
     // Process message same as voice
     handleUserSpeech(message);
+}
+
+// Generate PDF manually based on current conversation
+async function generatePDF() {
+    const generateBtn = document.getElementById('generatePdfBtn');
+
+    // Check if there's any conversation
+    if (conversationHistory.length === 0) {
+        showError('Please have a conversation first before generating PDF');
+        return;
+    }
+
+    // Disable button and show loading state
+    generateBtn.classList.add('generating');
+    generateBtn.textContent = '⏳ Generating...';
+    generateBtn.disabled = true;
+
+    try {
+        // Call the generate endpoint
+        const response = await fetch('/api/fir/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                history: conversationHistory,
+                language: languageSelect.value
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to generate PDF');
+        }
+
+        const data = await response.json();
+
+        if (data.status === 'success' && data.pdf_filename) {
+            // Show success message with download button
+            showPDFDownloadButton(data.pdf_filename, data.complete, data.missing_fields);
+
+            // Show notification
+            const successMsg = document.createElement('div');
+            successMsg.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: ${data.complete ? '#4caf50' : '#ff9800'};
+                color: white;
+                padding: 15px 25px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+            `;
+            if (data.complete) {
+                successMsg.textContent = '✅ Complete FIR PDF Generated!';
+            } else {
+                successMsg.innerHTML = '⚠️ PDF Generated<br><small>Some fields may be incomplete</small>';
+            }
+            document.body.appendChild(successMsg);
+
+            setTimeout(() => {
+                successMsg.remove();
+            }, 5000);
+
+        } else {
+            throw new Error(data.error || 'PDF generation failed');
+        }
+
+    } catch (error) {
+        console.error('PDF Generation Error:', error);
+        showError('Failed to generate PDF. Please try again.');
+    } finally {
+        // Reset button
+        generateBtn.classList.remove('generating');
+        generateBtn.textContent = '📄 Generate PDF';
+        generateBtn.disabled = false;
+    }
 }

@@ -13,6 +13,8 @@ from ai.sarvam.tts import generate_speech_sarvam
 from gtts import gTTS
 import uuid
 import base64
+from app.services.fir_extractor import FIRDataExtractor
+from app.services.pdf_generator import FIRPDFGenerator
 
 class FIRService:
     """Service to handle FIR-related operations"""
@@ -20,6 +22,8 @@ class FIRService:
     def __init__(self):
         self.use_sarvam_chat = True
         self.use_sarvam_tts = True
+        self.extractor = FIRDataExtractor()
+        self.pdf_generator = FIRPDFGenerator()
 
         # Check if Sarvam AI is available
         try:
@@ -57,11 +61,42 @@ class FIRService:
         # Generate audio
         audio_base64 = self._generate_audio(ai_response, language_code)
 
-        return {
+        # Build response
+        response_data = {
             'response': ai_response,
             'audio': audio_base64,
             'status': 'success'
         }
+
+        # Check if FIR data is complete and generate PDF
+        # Add current exchange to history for extraction
+        updated_history = history + [
+            {'role': 'user', 'parts': [{'text': user_message}]},
+            {'role': 'model', 'parts': [{'text': ai_response}]}
+        ]
+
+        # Extract FIR data
+        extraction_result = self.extractor.extract_fir_data(updated_history, language_code)
+
+        if extraction_result.get('complete', False):
+            # Generate PDF
+            try:
+                fir_data = extraction_result['data']
+                pdf_path = self.pdf_generator.generate_fir_pdf(fir_data)
+                pdf_filename = os.path.basename(pdf_path)
+
+                response_data['fir_complete'] = True
+                response_data['pdf_filename'] = pdf_filename
+
+                print(f"✅ FIR PDF generated: {pdf_filename}")
+
+            except Exception as e:
+                print(f"PDF generation error: {str(e)}")
+                response_data['fir_complete'] = False
+        else:
+            response_data['fir_complete'] = False
+
+        return response_data
 
     def _get_ai_response(self, user_message, language_name, language_code, history):
         """Get AI response using Sarvam or fallback"""
