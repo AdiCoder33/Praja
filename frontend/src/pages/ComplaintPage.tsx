@@ -149,6 +149,60 @@ export default function ComplaintPage() {
       
       <div className="header-separator"></div>
 
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-start',
+          gap: '12px',
+          alignItems: 'center',
+          padding: '12px 32px',
+          position: 'sticky',
+          top: 0,
+          zIndex: 5,
+          backdropFilter: 'blur(10px)',
+          background: 'linear-gradient(90deg, rgba(255,255,255,0.85), rgba(255,255,255,0.75))',
+          borderBottom: '1px solid rgba(0,0,0,0.05)'
+        }}
+      >
+        <button
+          onClick={handleGeneratePDF}
+          disabled={isGenerating}
+          style={{
+            padding: '10px 18px',
+            background: '#1e3a8a',
+            color: 'white',
+            border: 'none',
+            borderRadius: '999px',
+            cursor: isGenerating ? 'wait' : 'pointer',
+            fontSize: '14px',
+            fontWeight: 700,
+            boxShadow: '0 10px 30px rgba(30,58,138,0.18)',
+            transition: 'all 0.2s ease',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+          onMouseEnter={(e) => {
+            if (!isGenerating) {
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 14px 34px rgba(30,58,138,0.28)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isGenerating) {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 10px 30px rgba(30,58,138,0.18)';
+            }
+          }}
+        >
+          {isGenerating ? '⏳ Generating...' : '📄 Generate PDF'}
+        </button>
+
+        <div style={{ fontSize: '12px', color: '#4b5563' }}>
+          Tip: finish the chat, then tap Generate PDF to download your FIR report.
+        </div>
+      </div>
+
       <main className="complaint-main-layout">
         <div className="matter-side">
           <VoiceAssistant language={language} resetCounter={resetCounter} />

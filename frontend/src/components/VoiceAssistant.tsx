@@ -23,6 +23,7 @@ export default function VoiceAssistant({ resetCounter = 0 }: VoiceAssistantProps
   const [messages, setMessages] = useState<Message[]>([]);
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [conversationMode, setConversationMode] = useState(false);
   const [pendingSpeech, setPendingSpeech] = useState('');
   const [placeholder, setPlaceholder] = useState('');
@@ -154,34 +155,71 @@ export default function VoiceAssistant({ resetCounter = 0 }: VoiceAssistantProps
     }
   };
 
+  const stripThinkBlocks = (text: string) => (text || '').replace(/<think>[\s\S]*?<\/think>/gi, '');
+  const collapseRepeats = (text: string) => (text || '').replace(/(\b[\p{L}\p{N}'-]+\b)(\s+\1)+/giu, '$1');
+  const normalizeText = (text: string) => {
+    const noThink = stripThinkBlocks(text || '');
+    const collapsed = collapseRepeats(noThink);
+    return collapsed.replace(/\s+/g, ' ').trim().slice(0, 300);
+  };
+
   const handleUserSpeech = async (text: string) => {
-    setMessages((prev) => [...prev, { text, type: 'user' }]);
+    // Drop exact duplicate user turns to avoid loops from repeated transcripts
+    const cleanedInput = normalizeText(text);
+    if (!cleanedInput) return;
+
+    const lastUser = [...conversationHistory].reverse().find((m) => m.role === 'user');
+    if (lastUser?.parts?.[0]?.text === cleanedInput) {
+      return;
+    }
+
+    if (loading) return;
+    setLoading(true);
+
+    setMessages((prev) => [...prev, { text: cleanedInput, type: 'user' }]);
     setIsProcessing(true);
     setPlaceholder('Processing...');
 
     try {
+      // Use only the most recent exchanges to avoid bloated prompts and repeats
+      const recentHistory = conversationHistory.slice(-12);
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: text,
+          message: cleanedInput,
           language: LANGUAGE_MAP[language],
-          history: conversationHistory,
+          history: recentHistory,
         }),
       });
 
       const data = await response.json();
-      setMessages((prev) => [...prev, { text: data.response, type: 'ai' }]);
+
+      const cleanResponse = (raw: string) => normalizeText(raw || '');
+
+      const aiText = cleanResponse(data.response || '');
+
+      let dedupAi = false;
+      setMessages((prev) => {
+        const lastAi = [...prev].reverse().find((m) => m.type === 'ai');
+        if (lastAi?.text === aiText) {
+          dedupAi = true;
+          return prev;
+        }
+        return [...prev, { text: aiText, type: 'ai' }];
+      });
 
       // Update conversation history
-      setConversationHistory((prev) => [
-        ...prev,
-        { role: 'user', parts: [{ text }] },
-        { role: 'model', parts: [{ text: data.response }] },
-      ]);
+      setConversationHistory((prev) => {
+        const base = [...prev, { role: 'user', parts: [{ text: cleanedInput }] }];
+        const full = dedupAi ? base : [...base, { role: 'model', parts: [{ text: aiText }] }];
+        // Keep only last 12 turns (user/ai messages) to prevent runaway history
+        return full.slice(-12);
+      });
 
       // Play audio if available
-      if (data.audio) {
+      if (data.audio && !dedupAi) {
         playAudio(data.audio);
       } else {
         restartListening();
@@ -192,6 +230,7 @@ export default function VoiceAssistant({ resetCounter = 0 }: VoiceAssistantProps
       restartListening();
     } finally {
       setIsProcessing(false);
+      setLoading(false);
     }
   };
 
