@@ -18,6 +18,9 @@ const LANGUAGE_MAP: Record<string, string> = {
   hi: 'hi-IN',
 };
 
+const API_BASE = ((import.meta as any).env?.VITE_API_BASE || '').replace(/\/$/, '');
+const withApiBase = (path: string) => `${API_BASE}${path}`;
+
 export default function VoiceAssistant({ resetCounter = 0 }: VoiceAssistantProps) {
   const { language, t } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -153,7 +156,7 @@ export default function VoiceAssistant({ resetCounter = 0 }: VoiceAssistantProps
     setPlaceholder('Processing...');
 
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetch(withApiBase('/api/chat'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

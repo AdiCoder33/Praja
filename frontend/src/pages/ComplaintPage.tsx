@@ -5,6 +5,9 @@ import VoiceAssistant from '../components/VoiceAssistant';
 import OfficerModel from '../components/OfficerModel';
 import Navbar from '../components/Navbar';
 
+const API_BASE = ((import.meta as any).env?.VITE_API_BASE || '').replace(/\/$/, '');
+const withApiBase = (path: string) => `${API_BASE}${path}`;
+
 export default function ComplaintPage() {
   const navigate = useNavigate();
   const { language, setLanguage } = useLanguage();
@@ -28,7 +31,7 @@ export default function ComplaintPage() {
       }
 
       // Call the API to generate PDF
-      const response = await fetch('/api/fir/generate', {
+      const response = await fetch(withApiBase('/api/fir/generate'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -41,7 +44,7 @@ export default function ComplaintPage() {
 
       if (data.status === 'success' && data.pdf_filename) {
         // Download the PDF
-        window.open(`/api/fir/download/${data.pdf_filename}`, '_blank');
+        window.open(withApiBase(`/api/fir/download/${data.pdf_filename}`), '_blank');
 
         // Show success message
         const message = data.complete
