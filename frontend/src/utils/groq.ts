@@ -3,7 +3,8 @@ const API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 // Shared Groq key accessor for summary and translation calls
 export function getGroqApiKey(): string | undefined {
   // Prefer Vite-exposed env; fallback is only for local debugging.
-  return import.meta.env.VITE_GROQ_API_KEY || (window as any).__GROQ_API_KEY;
+  const env: any = (import.meta as any).env || {};
+  return env.VITE_GROQ_API_KEY || (window as any).__GROQ_API_KEY;
 }
 
 export async function generateSummary(text: string): Promise<string> {

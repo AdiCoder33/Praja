@@ -8,11 +8,15 @@ interface GalleryItem {
 interface CircularGalleryProps {
   items: GalleryItem[];
   textColor?: string;
+  font?: string;
+  speed?: number;
 }
 
 export default function CircularGallery({
   items,
-  textColor = '#1e293b'
+  textColor = '#1e293b',
+  font,
+  speed,
 }: CircularGalleryProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -33,7 +37,8 @@ export default function CircularGallery({
 
       // Auto-scroll horizontal pan
       if (scrollRef.current && !isDragging) {
-        scrollRef.current.scrollLeft += 1.5;
+        const step = speed ? speed / 25 : 1.5;
+        scrollRef.current.scrollLeft += step;
         const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth;
         if (scrollRef.current.scrollLeft >= maxScroll - 500) {
           scrollRef.current.scrollLeft = 0;
@@ -155,7 +160,7 @@ export default function CircularGallery({
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: textColor,
-                font: 'bold 15px Inter',
+                font: font || 'bold 15px Inter',
                 fontWeight: 600,
                 letterSpacing: '-0.3px',
                 marginTop: '0.75rem',

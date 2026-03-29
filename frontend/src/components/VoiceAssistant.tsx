@@ -24,7 +24,6 @@ export default function VoiceAssistant({ resetCounter = 0 }: VoiceAssistantProps
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [conversationMode, setConversationMode] = useState(false);
-  const [pendingSpeech, setPendingSpeech] = useState('');
   const [placeholder, setPlaceholder] = useState('');
 
   const recognitionRef = useRef<any>(null);
@@ -104,16 +103,10 @@ export default function VoiceAssistant({ resetCounter = 0 }: VoiceAssistantProps
         clearTimeout(speechTimeoutRef.current);
       }
 
-      setPendingSpeech((prev) => prev + ' ' + finalText);
       setPlaceholder(`Got: "${finalText}" - waiting 4s for more...`);
 
       speechTimeoutRef.current = setTimeout(() => {
-        setPendingSpeech((current) => {
-          if (current.trim()) {
-            handleUserSpeech(current.trim());
-          }
-          return '';
-        });
+        handleUserSpeech(finalText.trim());
         speechTimeoutRef.current = null;
       }, 4000);
     };

@@ -6,7 +6,7 @@ function Model() {
   const { scene } = useGLTF('/police_officer.glb');
   const modelRef = useRef<any>();
 
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
     if (modelRef.current) {
       // Continuous 360-degree rotation on Y axis
       modelRef.current.rotation.y += delta * 0.8;

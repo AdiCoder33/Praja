@@ -142,7 +142,7 @@ export default function ComplaintPage() {
       <Navbar
         onRestart={handleRestart}
         language={language}
-        onLanguageChange={setLanguage}
+        onLanguageChange={(lang) => setLanguage(lang as 'en' | 'te' | 'hi')}
         brandTitle="Praja FIR"
         brandIcon="/police_logo_v4.png"
         onGeneratePDF={handleGeneratePDF}
@@ -153,7 +153,7 @@ export default function ComplaintPage() {
 
       <main className="complaint-main-layout">
         <div className="matter-side">
-          <VoiceAssistant language={language} resetCounter={resetCounter} />
+          <VoiceAssistant resetCounter={resetCounter} />
         </div>
         <div className="model-side">
           <OfficerModel />
