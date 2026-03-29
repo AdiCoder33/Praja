@@ -11,13 +11,17 @@
   },
   "dependencies": {
     "ogl": "^0.0.104",
+    "@react-three/drei": "^9.114.0",
+    "@react-three/fiber": "^8.17.10",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.22.0"
+    "react-router-dom": "^6.22.0",
+    "three": "^0.170.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.56",
     "@types/react-dom": "^18.2.19",
+    "@types/three": "^0.170.0",
     "@typescript-eslint/eslint-plugin": "^7.0.2",
     "@typescript-eslint/parser": "^7.0.2",
     "@vitejs/plugin-react": "^4.2.1",
