@@ -1,35 +1,46 @@
+import { NavLink } from 'react-router-dom';
+
 const menu = [
-  { label: 'Dashboard', icon: '📊' },
-  { label: 'Create FIR', icon: '📝' },
-  { label: 'FIR Records', icon: '📂' },
-  { label: 'Analytics', icon: '📈' },
-  { label: 'Settings', icon: '⚙️' },
+  { label: 'Dashboard', icon: '🏠', path: '/dashboard' },
+  { label: 'Create FIR', icon: '📝', path: '/create-fir' },
+  { label: 'FIR Records', icon: '📂', path: '/fir-records' },
+  { label: 'AI Summary', icon: '🤖', path: '/ai-summary' },
+  { label: 'Analytics', icon: '📈', path: '/analytics' },
 ];
 
 export default function Sidebar() {
   return (
-    <aside className="hidden md:flex md:w-60 flex-col bg-slate-900 text-slate-100 h-screen sticky top-0 shadow-xl">
-      <div className="px-5 py-6 flex items-center gap-3 text-lg font-semibold border-b border-slate-800">
-        <span className="text-2xl">🚔</span>
+    <aside className="officer-sidebar">
+      <div className="sidebar-profile">
+        <div className="profile-avatar">👮‍♂️</div>
         <div>
-          <div>FIR System</div>
-          <div className="text-xs text-slate-400">Inspector Dashboard</div>
+          <div className="profile-title">FIR Management</div>
         </div>
       </div>
-      <nav className="flex-1 px-3 py-4 space-y-1">
-        {menu.map((item, idx) => (
-          <button
+
+      <nav className="sidebar-nav">
+        {menu.map((item) => (
+          <NavLink
             key={item.label}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition hover:bg-slate-800 ${
-              idx === 0 ? 'bg-slate-800 text-white' : 'text-slate-200'
-            }`}
+            to={item.path}
+            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
           >
-            <span className="text-lg">{item.icon}</span>
+            <span className="link-icon">{item.icon}</span>
             <span>{item.label}</span>
-          </button>
+          </NavLink>
         ))}
       </nav>
-      <div className="px-4 pb-5 text-xs text-slate-400">Phase 1 · Frontend only</div>
+
+      <div className="sidebar-footer">
+        <NavLink to="/settings" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <span className="link-icon">🔧</span>
+          <span>Settings</span>
+        </NavLink>
+        <NavLink to="/" className={({ isActive }) => `sidebar-link sidebar-logout ${isActive ? 'active' : ''}`}>
+          <span className="link-icon">🚪</span>
+          <span>Logout</span>
+        </NavLink>
+      </div>
     </aside>
   );
 }

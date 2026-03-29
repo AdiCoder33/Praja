@@ -1,317 +1,263 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import FIRCard, { FIRItem } from '../components/FIRCard';
-import VoiceInput from '../components/VoiceInput';
-import { processFIR } from '../utils/aiProcessor';
+import { useMemo, useState } from 'react';
 import Sidebar from '../components/Sidebar';
-import Topbar from '../components/Topbar';
-import StatsCards from '../components/StatsCards';
-import InsightsPanel from '../components/InsightsPanel';
+import { sampleFIRs, FIRItem, Status, Priority } from '../data/sampleFirs';
 
 interface FormState {
   name: string;
-  relationType: 'Father' | 'Husband';
+  relation: string;
   relationName: string;
   mobile: string;
   description: string;
 }
 
-const emptyForm: FormState = {
+const initialForm: FormState = {
   name: '',
-  relationType: 'Father',
+  relation: 'Father',
   relationName: '',
   mobile: '',
   description: '',
 };
 
-const sampleFIRs: FIRItem[] = [
-  {
-    id: 'seed-1',
-    name: 'Anil Kumar',
-    relationType: 'Father',
-    relationName: 'Ramesh Kumar',
-    mobile: '9876543210',
-    description: 'Bike stolen near market',
-    summary: 'Bike stolen near market',
-    status: 'Pending',
-    category: 'Theft',
-    priority: 'High',
-    date: new Date().toLocaleString(),
-  },
-  {
-    id: 'seed-2',
-    name: 'Priya Sharma',
-    relationType: 'Father',
-    relationName: 'Mahesh Sharma',
-    mobile: '9123456780',
-    description: 'Mobile snatching case in bus stop',
-    summary: 'Mobile snatching near bus stop',
-    status: 'Resolved',
-    category: 'Theft',
-    priority: 'Medium',
-    date: new Date(Date.now() - 86400000).toLocaleString(),
-  },
-  {
-    id: 'seed-3',
-    name: 'Rahul Verma',
-    relationType: 'Father',
-    relationName: 'Suresh Verma',
-    mobile: '9988776655',
-    description: 'Street fight incident outside cinema hall',
-    summary: 'Street fight outside cinema hall',
-    status: 'Pending',
-    category: 'Assault',
-    priority: 'High',
-    date: new Date(Date.now() - 2 * 86400000).toLocaleString(),
-  },
-  {
-    id: 'seed-4',
-    name: 'Neha Singh',
-    relationType: 'Husband',
-    relationName: 'Amit Singh',
-    mobile: '9090909090',
-    description: 'Wallet theft in crowded market',
-    summary: 'Wallet theft in crowded market',
-    status: 'Resolved',
-    category: 'Theft',
-    priority: 'Low',
-    date: new Date(Date.now() - 3 * 86400000).toLocaleString(),
-  },
-  {
-    id: 'seed-5',
-    name: 'Kiran Rao',
-    relationType: 'Father',
-    relationName: 'Prakash Rao',
-    mobile: '9876501234',
-    description: 'Verbal assault complaint near park',
-    summary: 'Verbal assault complaint near park',
-    status: 'Pending',
-    category: 'Assault',
-    priority: 'Medium',
-    date: new Date(Date.now() - 4 * 86400000).toLocaleString(),
-  },
-];
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-  const [language, setLanguage] = useState('en');
-  const [form, setForm] = useState<FormState>(emptyForm);
-  const [firs, setFirs] = useState<FIRItem[]>([]);
+  const [language, setLanguage] = useState('English');
+  const [firs, setFirs] = useState<FIRItem[]>(sampleFIRs);
+  const [form, setForm] = useState<FormState>(initialForm);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Resolved'>('All');
-  const [officerName, setOfficerName] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<'All' | Status>('All');
+  const [priorityFilter, setPriorityFilter] = useState<'All' | Priority>('All');
 
-  // Load session and FIRs
-  useEffect(() => {
-    const session = localStorage.getItem('firAuth');
-    if (!session) {
-      navigate('/login');
-      return;
-    }
-    const parsed = JSON.parse(session);
-    setOfficerName(parsed.name || 'Officer');
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
+  }, []);
 
-    const saved = localStorage.getItem('firData');
-    if (saved) {
-      setFirs(JSON.parse(saved));
-    } else {
-      setFirs(sampleFIRs);
-    }
-  }, [navigate]);
-
-  useEffect(() => {
-    localStorage.setItem('firData', JSON.stringify(firs));
-  }, [firs]);
-
-  const handleLogout = () => {
-    localStorage.removeItem('firAuth');
-    navigate('/login');
-  };
-
-  const updateForm = (key: keyof FormState, value: string) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleVoice = (text: string) => {
-    updateForm('description', text);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.relationName || !form.mobile || !form.description) {
       alert('Please fill all required fields');
       return;
     }
 
-    const processed = await processFIR(form.description);
-
     const newFir: FIRItem = {
       id: crypto.randomUUID(),
-      name: form.name,
-      relationType: form.relationType,
-      relationName: form.relationName,
-      mobile: form.mobile,
-      description: processed.englishText,
-      summary: processed.summary,
+      title: `${form.description.slice(0, 32)}${form.description.length > 32 ? '…' : ''}` || 'New FIR',
+      category: 'General',
+      date: new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date()),
+      place: 'Not provided',
+      complainant: form.name || 'Not provided',
       status: 'Pending',
-      category: processed.category,
-      priority: processed.priority,
-      date: new Date().toLocaleString(),
+      priority: 'Medium',
+      summary: form.description,
     };
 
     setFirs((prev) => [newFir, ...prev]);
-    setForm(emptyForm);
+    setForm(initialForm);
   };
 
-  const handleToggleStatus = (id: string) => {
-    setFirs((prev) => prev.map((fir) => (fir.id === id ? { ...fir, status: fir.status === 'Pending' ? 'Resolved' : 'Pending' } : fir)));
-  };
-
-  const handleDelete = (id: string) => {
-    setFirs((prev) => prev.filter((fir) => fir.id !== id));
+  const toggleStatus = (id: string) => {
+    setFirs((prev) =>
+      prev.map((fir) => (fir.id === id ? { ...fir, status: fir.status === 'Pending' ? 'Resolved' : 'Pending' } : fir)),
+    );
   };
 
   const filtered = useMemo(() => {
     return firs.filter((fir) => {
-      const matchesSearch = fir.summary.toLowerCase().includes(search.toLowerCase());
+      const matchesSearch = fir.title.toLowerCase().includes(search.toLowerCase()) || fir.summary.toLowerCase().includes(search.toLowerCase());
       const matchesStatus = statusFilter === 'All' ? true : fir.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      const matchesPriority = priorityFilter === 'All' ? true : fir.priority === priorityFilter;
+      return matchesSearch && matchesStatus && matchesPriority;
     });
-  }, [firs, search, statusFilter]);
+  }, [firs, search, statusFilter, priorityFilter]);
 
   const total = firs.length;
   const resolved = firs.filter((f) => f.status === 'Resolved').length;
   const pendingCount = firs.filter((f) => f.status === 'Pending').length;
 
+  const mostCommonCategory = useMemo(() => {
+    const counts = firs.reduce<Record<string, number>>((acc, item) => {
+      acc[item.category] = (acc[item.category] || 0) + 1;
+      return acc;
+    }, {});
+    const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+    return top ? top[0] : 'N/A';
+  }, [firs]);
+
+  const highPriorityCount = firs.filter((f) => f.priority === 'High').length;
+  const latestSummary = firs[0]?.summary || 'No FIRs yet';
+
+  const today = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex">
+    <div className="officer-layout">
       <Sidebar />
 
-      <main className="flex-1 px-3 md:px-6 py-5 space-y-4">
-        <Topbar officerName={officerName} language={language} onLanguageChange={setLanguage} onLogout={handleLogout} />
-
-        <StatsCards total={total} resolved={resolved} pending={pendingCount} />
-
-        <div className="grid lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 bg-white rounded-xl shadow-md border border-slate-200 p-4 space-y-4">
-            <div>
-              <div className="text-xl font-semibold text-slate-900">Greeting</div>
-              <div className="text-sm text-slate-600">Serving the nation with integrity.</div>
+      <main className="officer-main">
+        <header className="hero-header">
+          <div>
+            <div className="hero-title">{greeting}, Officer Meera Singh 👮‍♀️</div>
+            <div className="hero-sub">{today} · Justice delayed is justice denied.</div>
+          </div>
+          <div className="hero-actions">
+            <div className="language-pill">
+              <span>Language</span>
+              <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+                <option>English</option>
+                <option>हिन्दी</option>
+                <option>తెలుగు</option>
+              </select>
             </div>
-            <form className="space-y-3" onSubmit={handleSubmit}>
-              <div className="grid sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm text-slate-600 mb-1">Name *</label>
-                  <input
-                    className="w-full rounded-lg px-3 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                    value={form.name}
-                    onChange={(e) => updateForm('name', e.target.value)}
-                    placeholder="Complainant name"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-sm text-slate-600 mb-1">Relation *</label>
-                    <select
-                      className="w-full rounded-lg px-3 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                      value={form.relationType}
-                      onChange={(e) => updateForm('relationType', e.target.value as 'Father' | 'Husband')}
-                    >
-                      <option value="Father">Father</option>
-                      <option value="Husband">Husband</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-slate-600 mb-1">Relation Name *</label>
-                    <input
-                      className="w-full rounded-lg px-3 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                      value={form.relationName}
-                      onChange={(e) => updateForm('relationName', e.target.value)}
-                      placeholder="Father/Husband name"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm text-slate-600 mb-1">Mobile *</label>
-                  <input
-                    className="w-full rounded-lg px-3 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                    value={form.mobile}
-                    onChange={(e) => updateForm('mobile', e.target.value)}
-                    placeholder="10-digit mobile"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-slate-600 mb-1">Description *</label>
-                  <textarea
-                    className="w-full rounded-lg px-3 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                    rows={3}
-                    value={form.description}
-                    onChange={(e) => updateForm('description', e.target.value)}
-                    placeholder="Enter complaint details"
-                    required
-                  />
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <VoiceInput onTranscript={handleVoice} language={language} />
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition"
+            <button className="icon-button" title="Notifications">🔔</button>
+            <div className="avatar">MS</div>
+          </div>
+        </header>
+
+        <section className="stat-grid">
+          <div className="stat-card blue">
+            <div className="stat-label">Total FIRs</div>
+            <div className="stat-value">{total}</div>
+            <div className="stat-foot">↑ +8 this week</div>
+          </div>
+          <div className="stat-card green">
+            <div className="stat-label">Resolved FIRs</div>
+            <div className="stat-value">{resolved}</div>
+            <div className="stat-foot">↑ +3</div>
+          </div>
+          <div className="stat-card amber">
+            <div className="stat-label">Pending</div>
+            <div className="stat-value">{pendingCount}</div>
+            <div className="stat-foot">↔ this week</div>
+          </div>
+          <div className="stat-card violet insights-card">
+            <div className="stat-label">AI Insights</div>
+            <ul>
+              <li>Most common category: {mostCommonCategory}</li>
+              <li>{highPriorityCount} high priority FIRs</li>
+              <li>Latest FIR summary: {latestSummary}</li>
+            </ul>
+          </div>
+        </section>
+
+        <section className="dashboard-grid">
+          <div className="glass-card create-card">
+            <h3>Create FIR</h3>
+            <form className="form-grid" onSubmit={handleSubmit}>
+              <label>
+                <span>Name</span>
+                <input
+                  value={form.name}
+                  onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                  placeholder="Enter name"
+                  required
+                />
+              </label>
+              <label>
+                <span>Relation</span>
+                <select
+                  value={form.relation}
+                  onChange={(e) => setForm((p) => ({ ...p, relation: e.target.value }))}
                 >
-                  Save FIR
-                </button>
+                  <option>Father</option>
+                  <option>Husband</option>
+                  <option>Mother</option>
+                </select>
+              </label>
+              <label>
+                <span>Relation Name</span>
+                <input
+                  value={form.relationName}
+                  onChange={(e) => setForm((p) => ({ ...p, relationName: e.target.value }))}
+                  placeholder="Enter relation name"
+                  required
+                />
+              </label>
+              <label>
+                <span>Mobile</span>
+                <input
+                  value={form.mobile}
+                  onChange={(e) => setForm((p) => ({ ...p, mobile: e.target.value }))}
+                  placeholder="10 digit mobile"
+                  required
+                />
+              </label>
+              <label className="full-row">
+                <span>Description</span>
+                <textarea
+                  value={form.description}
+                  onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
+                  placeholder="Enter complaint details"
+                  rows={3}
+                  required
+                />
+              </label>
+              <div className="form-actions">
+                <button type="button" className="ghost-btn">🎤 Voice Input</button>
+                <button type="submit" className="primary-btn">Save FIR</button>
               </div>
             </form>
           </div>
 
-          <InsightsPanel firs={firs} />
-        </div>
-
-        <div className="bg-white rounded-xl shadow-md border border-slate-200 p-4 space-y-4">
-          <div className="flex flex-wrap items-center gap-3 justify-between">
-            <div className="flex gap-2 items-center">
-              <input
-                className="px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                placeholder="Search summary"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <select
-                className="px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as 'All' | 'Pending' | 'Resolved')}
-              >
-                <option>All</option>
-                <option>Pending</option>
-                <option>Resolved</option>
-              </select>
-            </div>
-            <div className="text-sm text-slate-500">FIR stored in English · Displayed in English</div>
-          </div>
-
-          <div className="grid gap-3">
-            {filtered.length === 0 && (
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center text-slate-500">
-                No FIRs yet. Add one to get started.
-              </div>
-            )}
-            {filtered.map((fir) => (
-              <div key={fir.id} className="rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition">
-                <FIRCard
-                  fir={fir}
-                  language={language}
-                  onToggleStatus={handleToggleStatus}
-                  onDelete={handleDelete}
+          <div className="glass-card fir-list-card">
+            <div className="list-header">
+              <h3>FIRs</h3>
+              <div className="list-filters">
+                <input
+                  placeholder="Search summary"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                 />
+                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'All' | Status)}>
+                  <option value="All">All</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Resolved">Resolved</option>
+                </select>
+                <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value as 'All' | Priority)}>
+                  <option value="All">All priorities</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
               </div>
-            ))}
+            </div>
+
+            <div className="fir-list">
+              {filtered.map((fir) => (
+                <div key={fir.id} className="fir-card">
+                  <div className="fir-card-main">
+                    <div>
+                      <div className="fir-title">{fir.title}</div>
+                      <div className="fir-meta">{fir.category} · {fir.date}</div>
+                      <div className="fir-meta">Place: {fir.place}</div>
+                      <div className="fir-meta">Complainant: {fir.complainant}</div>
+                      <div className="fir-summary">{fir.summary}</div>
+                    </div>
+                    <div className="fir-tags">
+                      <span className={`pill ${fir.status === 'Pending' ? 'pill-amber' : 'pill-green'}`}>{fir.status}</span>
+                      <span className={`pill ${fir.priority === 'High' ? 'pill-rose' : fir.priority === 'Medium' ? 'pill-amber' : 'pill-sky'}`}>
+                        {fir.priority}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="fir-actions">
+                    <div className="toggle-wrap">
+                      <span>Resolve</span>
+                      <button className={`toggle ${fir.status === 'Resolved' ? 'active' : ''}`} onClick={() => toggleStatus(fir.id)}>
+                        <span className="toggle-dot" />
+                      </button>
+                    </div>
+                    <div className="icon-actions">
+                      <button title="Call">📞</button>
+                      <button title="Message">💬</button>
+                      <button title="Play">▶️</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        </section>
       </main>
     </div>
   );

@@ -9,6 +9,8 @@ export default function ComplaintPage() {
   const navigate = useNavigate();
   const { language, setLanguage } = useLanguage();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showAssistant, setShowAssistant] = useState(false);
+  const [resetCounter, setResetCounter] = useState(0);
 
   const handleGeneratePDF = async () => {
     setIsGenerating(true);
@@ -143,6 +145,8 @@ export default function ComplaintPage() {
         onLanguageChange={setLanguage}
         brandTitle="Praja FIR"
         brandIcon="/police_logo_v4.png"
+        onGeneratePDF={handleGeneratePDF}
+        isGeneratingPDF={isGenerating}
       />
       
       <div className="header-separator"></div>

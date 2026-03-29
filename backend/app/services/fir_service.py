@@ -15,6 +15,7 @@ import uuid
 import base64
 from app.services.fir_extractor import FIRDataExtractor
 from app.services.pdf_generator import FIRPDFGenerator
+from ai.groq_client import summarize_fir_conversation
 
 class FIRService:
     """Service to handle FIR-related operations"""
@@ -24,6 +25,7 @@ class FIRService:
         self.use_sarvam_tts = True
         self.extractor = FIRDataExtractor()
         self.pdf_generator = FIRPDFGenerator()
+        self.groq_enabled = os.getenv('GROQ_API_KEY') is not None
 
         # Check if Sarvam AI is available
         try:
@@ -77,6 +79,13 @@ class FIRService:
 
         # Extract FIR data
         extraction_result = self.extractor.extract_fir_data(updated_history, language_code)
+
+        # Generate a concise Groq summary (5-10 lines) if key is present
+        groq_summary = None
+        if self.groq_enabled:
+            groq_summary = summarize_fir_conversation(updated_history)
+            if groq_summary:
+                response_data['ai_summary'] = groq_summary
 
         if extraction_result.get('complete', False):
             # Generate PDF
