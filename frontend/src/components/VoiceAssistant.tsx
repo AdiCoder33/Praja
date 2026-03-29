@@ -28,11 +28,17 @@ export default function VoiceAssistant({ resetCounter = 0 }: VoiceAssistantProps
   const [placeholder, setPlaceholder] = useState('');
 
   const recognitionRef = useRef<any>(null);
-  const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const speechTimeoutRef = useRef<number | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const isAISpeakingRef = useRef(false);
   const conversationModeRef = useRef(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const [conversationHistory, setConversationHistory] = useState<any[]>([]);
+
+  // Store conversation history globally for PDF generation
+  useEffect(() => {
+    (window as any).conversationHistory = conversationHistory;
+  }, [conversationHistory]);
 
   // Initialize/Reset messages
   useEffect(() => {
@@ -157,12 +163,24 @@ export default function VoiceAssistant({ resetCounter = 0 }: VoiceAssistantProps
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, language: LANGUAGE_MAP[language] }),
+        body: JSON.stringify({
+          message: text,
+          language: LANGUAGE_MAP[language],
+          history: conversationHistory,
+        }),
       });
 
       const data = await response.json();
       setMessages((prev) => [...prev, { text: data.response, type: 'ai' }]);
 
+      // Update conversation history
+      setConversationHistory((prev) => [
+        ...prev,
+        { role: 'user', parts: [{ text }] },
+        { role: 'model', parts: [{ text: data.response }] },
+      ]);
+
+      // Play audio if available
       if (data.audio) {
         playAudio(data.audio);
       } else {

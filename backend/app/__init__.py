@@ -11,8 +11,9 @@ def create_app():
     CORS(app)
 
     # Register routes
-    from app.routes import chat, health
+    from app.routes import chat, health, fir
     app.register_blueprint(chat.bp)
     app.register_blueprint(health.bp)
+    app.register_blueprint(fir.bp)
 
     return app

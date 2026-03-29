@@ -37,6 +37,7 @@
             color: white;
             padding: 20px;
             text-align: center;
+            position: relative;
         }
 
         .header h1 {
@@ -47,6 +48,37 @@
         .header p {
             font-size: 14px;
             opacity: 0.9;
+        }
+
+        .generate-pdf-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .generate-pdf-btn:hover {
+            background: white;
+            color: #667eea;
+            transform: scale(1.05);
+        }
+
+        .generate-pdf-btn:active {
+            transform: scale(0.95);
+        }
+
+        .generate-pdf-btn.generating {
+            opacity: 0.6;
+            cursor: wait;
         }
 
         .chat-container {
@@ -216,11 +248,28 @@
         .error-message.show {
             display: block;
         }
+
+        /* Mobile responsiveness for generate button */
+        @media (max-width: 600px) {
+            .generate-pdf-btn {
+                position: static;
+                display: block;
+                margin: 0 auto 10px;
+                width: fit-content;
+            }
+
+            .header {
+                padding-bottom: 10px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
+            <button class="generate-pdf-btn" id="generatePdfBtn" onclick="generatePDF()">
+                📄 Generate PDF
+            </button>
             <h1>🚔 AI Voice FIR Assistant</h1>
             <p>Speak your complaint in your language</p>
         </div>
