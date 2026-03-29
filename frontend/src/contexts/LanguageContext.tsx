@@ -37,6 +37,13 @@ const translations = {
     'nav.home': 'Home',
     'nav.about': 'About',
     'nav.contact': 'Contact',
+    'nav.logo': 'Praja FIR',
+    'nav.restart': '🔄 Restart Report',
+    'complaint.input.placeholder': 'Type here or click mic...',
+    'complaint.input.send': 'Send',
+    'complaint.footer.hint': '🎤 Click mic for continuous conversation - I\'ll listen after each response!',
+    'complaint.footer.powered': '💡 Powered by Sarvam AI 🇮🇳',
+    'complaint.initial.msg': 'Hello! I am your AI Assistant. Please tell me about your complaint. You can speak in English, Hindi, or Telugu.',
   },
   te: {
     'hero.title': 'AI ఆధారిత FIR దాఖలు వ్యవస్థ',
@@ -66,6 +73,13 @@ const translations = {
     'nav.home': 'హోమ్',
     'nav.about': 'గురించి',
     'nav.contact': 'సంప్రదించండి',
+    'nav.logo': 'ప్రజా ఎఫ్.ఐ.ఆర్',
+    'nav.restart': '🔄 నివేదికను పునఃప్రారంభించండి',
+    'complaint.input.placeholder': 'ఇక్కడ టైప్ చేయండి లేదా మైక్ క్లిక్ చేయండి...',
+    'complaint.input.send': 'పంపండి',
+    'complaint.footer.hint': '🎤 నిరంతర సంభాషణ కోసం మైక్ క్లిక్ చేయండి - ప్రతి ప్రతిస్పందన తర్వాత నేను వింటాను!',
+    'complaint.footer.powered': '💡 సర్వం AI 🇮🇳 ద్వారా ఆధారితం',
+    'complaint.initial.msg': 'నమస్కారం! నేను మీ AI సహాయకుడిని. దయచేసి మీ ఫిర్యాదు గురించి నాకు తెలియజేయండి. మీరు ఇంగ్లీష్, హిందీ లేదా తెలుగులో మాట్లాడవచ్చు.',
   },
   hi: {
     'hero.title': 'AI-संचालित FIR दाखिल प्रणाली',
@@ -95,6 +109,13 @@ const translations = {
     'nav.home': 'होम',
     'nav.about': 'के बारे में',
     'nav.contact': 'संपर्क करें',
+    'nav.logo': 'प्रजा एफ़आईआर',
+    'nav.restart': '🔄 रिपोर्ट पुनः शुरू करें',
+    'complaint.input.placeholder': 'यहाँ टाइप करें या माइक पर क्लिक करें...',
+    'complaint.input.send': 'भेजें',
+    'complaint.footer.hint': '🎤 निरंतर बातचीत के लिए माइक पर क्लिक करें - मैं हर प्रतिक्रिया के बाद सुनूँगा!',
+    'complaint.footer.powered': '💡 सर्वम AI 🇮🇳 द्वारा संचालित',
+    'complaint.initial.msg': 'नमस्ते! मैं आपका AI सहायक हूँ। कृपया मुझे अपनी शिकायत के बारे में बताएं। आप अंग्रेजी, हिंदी या तेलुगु में बात कर सकते हैं।',
   }
 };
 
@@ -104,7 +125,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<Language>('en');
 
   const t = (key: string): string => {
-    return translations[language][key as keyof typeof translations.en] || key;
+    return (translations[language] as any)[key] || (translations.en as any)[key] || key;
   };
 
   return (
