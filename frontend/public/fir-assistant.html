@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="te">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -221,15 +221,15 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚔 AI Voice FIR Assistant</h1>
-            <p>Speak your complaint in your language</p>
+            <h1 id="headerTitle">🚔 AI Voice FIR Assistant</h1>
+            <p id="headerSubtitle">Speak your complaint in your language</p>
         </div>
 
         <div class="error-message" id="errorMessage" style="display: none;"></div>
 
         <div class="chat-container" id="chatContainer">
             <div class="message ai">
-                <div class="message-content">
+                <div class="message-content" id="aiGreeting">
                     Namaste! I'm your AI assistant. Please tell me about your complaint. You can speak in English, Hindi, or Telugu.
                 </div>
             </div>
@@ -239,7 +239,7 @@
             <select class="language-selector" id="languageSelect" title="Select your language - AI will respond in this language">
                 <option value="en-IN">🇬🇧 English</option>
                 <option value="hi-IN">🇮🇳 हिंदी (Hindi)</option>
-                <option value="te-IN">🇮🇳 తెలుగు (Telugu)</option>
+                <option value="te-IN" selected>🇮🇳 తెలుగు (Telugu)</option>
             </select>
 
             <input type="text"
@@ -248,7 +248,7 @@
                    style="flex: 1; padding: 12px; border: 2px solid #e0e0e0; border-radius: 20px; outline: none; font-size: 14px;"
                    onkeypress="if(event.key==='Enter') sendTextMessage()">
 
-            <button onclick="sendTextMessage()"
+            <button id="sendButton" onclick="sendTextMessage()"
                     style="padding: 12px 20px; background: #667eea; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 14px;">
                 Send ➤
             </button>
@@ -258,9 +258,9 @@
             </button>
         </div>
 
-        <div style="padding: 10px; text-align: center; background: #f0f0f0; font-size: 12px; color: #666;">
+        <div style="padding: 10px; text-align: center; background: #f0f0f0; font-size: 12px; color: #666;" id="micHelper">
             🎤 Click mic for <strong>continuous conversation</strong> - I'll listen after each response! You can interrupt me anytime. 🔊
-            <div style="font-size: 11px; color: #888; margin-top: 5px;">
+            <div style="font-size: 11px; color: #888; margin-top: 5px;" id="footerNote">
                 💡 Powered by Sarvam AI 🇮🇳 - Natural Indian voices & language understanding
             </div>
         </div>

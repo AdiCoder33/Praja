@@ -114,15 +114,15 @@ export default function LandingPage() {
         </div>
 
         {/* Interactive Mouse Drag sideways scrolling gallery without 3D float logic */}
-        <div style={{ height: '350px', width: '100vw', margin: '0 calc(-50vw + 50%)', position: 'relative', overflow: 'hidden' }}>
+        <div className="full-bleed-gallery">
           <CircularGallery
             items={galleryItems}
-            bend={2}
-            textColor="#0f172a"
+            bend={1.25}
+            textColor="#ffffff"
             borderRadius={0.06}
-            font="bold 28px Inter"
-            scrollEase={0.04}
-            scrollSpeed={1.5}
+            font="600 30px 'Figtree', 'Inter', sans-serif"
+            scrollEase={0.05}
+            scrollSpeed={2}
           />
         </div>
       </section>
