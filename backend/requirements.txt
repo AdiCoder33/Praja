@@ -5,6 +5,7 @@ python-dotenv==1.0.0
 gTTS==2.5.0
 requests==2.31.0
 reportlab==4.0.7
+gunicorn==22.0.0
 
 # Sarvam AI for better Indian language support
 sarvamai
