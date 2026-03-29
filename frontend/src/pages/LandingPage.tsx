@@ -113,16 +113,13 @@ export default function LandingPage() {
           <p>{t("about.desc")}</p>
         </div>
 
-        {/* Interactive Mouse Drag sideways scrolling gallery without 3D float logic */}
-        <div style={{ height: '350px', width: '100vw', margin: '0 calc(-50vw + 50%)', position: 'relative', overflow: 'hidden' }}>
+        {/* Interactive sideways scrolling gallery without excessive vertical gaps */}
+        <div style={{ width: '100vw', margin: '0 calc(-50vw + 50%)', position: 'relative', overflow: 'hidden' }}>
           <CircularGallery
             items={galleryItems}
-            bend={2}
             textColor="#0f172a"
-            borderRadius={0.06}
             font="bold 28px Inter"
-            scrollEase={0.04}
-            scrollSpeed={1.5}
+            speed={40} // Consistent speed parameter passing
           />
         </div>
       </section>

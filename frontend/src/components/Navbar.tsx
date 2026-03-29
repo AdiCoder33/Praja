@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 export default function Navbar({ onRestart }: { onRestart?: () => void }) {
@@ -6,9 +7,18 @@ export default function Navbar({ onRestart }: { onRestart?: () => void }) {
   const location = useLocation();
   const { language, setLanguage, t } = useLanguage();
   const isComplaintPage = location.pathname === '/complaint';
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <nav className="navbar">
+    <nav className={`navbar ${scrolled ? 'navbar-scrolled' : ''}`}>
       <div className="nav-container">
         <div className="nav-brand" onClick={() => navigate('/')}>
           <img src="/police_logo_v4.png" alt="Police Logo" width="40" />

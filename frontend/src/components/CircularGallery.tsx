@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 
 interface GalleryItem {
   image: string;
@@ -7,113 +7,163 @@ interface GalleryItem {
 
 interface CircularGalleryProps {
   items: GalleryItem[];
-  bend?: number;
   textColor?: string;
-  borderRadius?: number;
-  font?: string;
-  scrollEase?: number;
-  scrollSpeed?: number;
 }
 
 export default function CircularGallery({
   items,
-  textColor = '#000',
-  font = 'bold 24px Inter',
+  textColor = '#1e293b'
 }: CircularGalleryProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
 
+  // Duplicate items array a few times to ensure infinite smooth scrolling
+  const duplicatedItems = [...items, ...items, ...items, ...items];
+
+  // Auto-scroll logic (faster)
+  useEffect(() => {
+    if (isDragging) return;
+    
+    let animationId: number;
+    const scroll = () => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollLeft += 1.5; // Fast sideways panning
+        
+        const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth;
+        // If we reach near the end of our cloned arrays, silently snap back to the start
+        if (scrollRef.current.scrollLeft >= maxScroll - 500) {
+          scrollRef.current.scrollLeft = 0;
+        }
+      }
+      animationId = requestAnimationFrame(scroll);
+    };
+    
+    animationId = requestAnimationFrame(scroll);
+    return () => cancelAnimationFrame(animationId);
+  }, [isDragging]);
+
+  // Mouse Drag Handlers
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
-    setStartX(e.pageX - (containerRef.current?.offsetLeft || 0));
-    setScrollLeft(containerRef.current?.scrollLeft || 0);
+    if (!scrollRef.current) return;
+    setStartX(e.pageX - scrollRef.current.offsetLeft);
+    setScrollLeft(scrollRef.current.scrollLeft);
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    const x = e.pageX - (containerRef.current?.offsetLeft || 0);
-    const walk = (x - startX) * 2;
-    if (containerRef.current) {
-      containerRef.current.scrollLeft = scrollLeft - walk;
-    }
+  const handleMouseLeave = () => {
+    setIsDragging(false);
   };
 
   const handleMouseUp = () => {
     setIsDragging(false);
   };
 
-  useEffect(() => {
-    const handleGlobalMouseUp = () => setIsDragging(false);
-    window.addEventListener('mouseup', handleGlobalMouseUp);
-    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
-  }, []);
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 2; // Scroll-fast multiplier
+    scrollRef.current.scrollLeft = scrollLeft - walk;
+  };
 
   return (
     <div
-      ref={containerRef}
-      className="circular-gallery"
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
+      className="marquee-gallery-scene"
       style={{
+        width: '100vw',
+        height: '240px',
         display: 'flex',
-        gap: '30px',
-        overflow: 'hidden',
-        cursor: isDragging ? 'grabbing' : 'grab',
-        padding: '20px',
-        userSelect: 'none',
+        alignItems: 'center',
+        marginLeft: 'calc(-50vw + 50%)',
+        position: 'relative',
+        background: '#f1f5f9',
       }}
     >
-      {items.map((item, index) => (
-        <div
-          key={index}
-          className="gallery-item"
-          style={{
-            minWidth: '300px',
-            height: '300px',
-            borderRadius: '16px',
-            overflow: 'hidden',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
-            position: 'relative',
-            transition: 'transform 0.3s ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'scale(1.05)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
-          }}
-        >
-          <img
-            src={item.image}
-            alt={item.text}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-            }}
-            draggable={false}
-          />
+      <div
+        ref={scrollRef}
+        onMouseDown={handleMouseDown}
+        onMouseLeave={handleMouseLeave}
+        onMouseUp={handleMouseUp}
+        onMouseMove={handleMouseMove}
+        style={{
+          display: 'flex',
+          gap: '20px',
+          overflowX: 'hidden', /* Hidden scrollbar, handled by JS */
+          width: '100%',
+          cursor: isDragging ? 'grabbing' : 'grab',
+          padding: '0 20px',
+        }}
+        className="no-scrollbar"
+      >
+        {duplicatedItems.map((item, index) => (
           <div
+            key={index}
             style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              background: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
-              padding: '20px',
-              color: textColor === '#0f172a' ? '#fff' : textColor,
-              font: font,
+              width: '140px',
+              height: '180px',
+              borderRadius: '12px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              flexShrink: 0,
+              padding: '8px 0',
+              pointerEvents: 'none', /* Prevent dragging image directly */
+              userSelect: 'none'
             }}
           >
-            {item.text}
+            <div 
+              style={{ 
+                width: '100%', 
+                height: '100px',
+                overflow: 'hidden', 
+                borderRadius: '10px', 
+                boxShadow: '0 6px 12px rgba(0,0,0,0.08)',
+              }}
+            >
+              <img
+                src={item.image}
+                alt={item.text}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  pointerEvents: 'none',
+                }}
+                draggable={false}
+              />
+            </div>
+            
+            <div
+              style={{
+                height: '60px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: textColor,
+                font: 'bold 15px Inter',
+                fontWeight: 600,
+                letterSpacing: '-0.3px',
+                marginTop: '0.75rem',
+                textAlign: 'center',
+                lineHeight: 1.2
+              }}
+            >
+              {item.text}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;  /* Firefox */
+        }
+      `}</style>
     </div>
   );
 }
