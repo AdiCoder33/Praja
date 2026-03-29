@@ -1,36 +1,45 @@
-import { useNavigate } from 'react-router-dom';
-import { useLanguage } from '../contexts/LanguageContext';
+import LanguageSelector from './LanguageSelector';
 
-export default function Navbar() {
-  const navigate = useNavigate();
-  const { language, setLanguage, t } = useLanguage();
+interface Props {
+  officerName?: string;
+  language?: string;
+  onLanguageChange?: (lang: string) => void;
+  onLogout?: () => void;
+  onRestart?: () => void;
+  brandTitle?: string;
+  brandIcon?: string;
+}
 
+export default function Navbar({ officerName, language, onLanguageChange, onLogout, onRestart, brandTitle, brandIcon }: Props) {
   return (
-    <nav className="navbar">
-      <div className="nav-container">
-        <div className="nav-brand" onClick={() => navigate('/')}>
-          <img src="/police_logo_v4.png" alt="Police Logo" width="40" />
-          <span>Praja FIR</span>
-        </div>
-
-        <div className="nav-links">
-          <a href="#home" onClick={() => navigate('/')}>{t('nav.home')}</a>
-          <a href="#about">{t('nav.about')}</a>
-          <a href="#contact">{t('nav.contact')}</a>
-        </div>
-
-        <div className="nav-language">
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value as 'en' | 'te' | 'hi')}
-            className="language-select"
-          >
-            <option value="en">🇬🇧 English</option>
-            <option value="te">🇮🇳 తెలుగు</option>
-            <option value="hi">🇮🇳 हिंदी</option>
-          </select>
+    <header className="app-navbar">
+      <div className="navbar-left">
+        {brandIcon ? (
+          <img src={brandIcon} alt="logo" className="navbar-logo" />
+        ) : (
+          <span className="navbar-icon">🚔</span>
+        )}
+        <div className="navbar-brand">
+          <div className="navbar-title">{brandTitle || 'FIR Management'}</div>
+          {officerName && <div className="navbar-sub">Officer: {officerName}</div>}
         </div>
       </div>
-    </nav>
+
+      <div className="navbar-right">
+        {language && onLanguageChange && (
+          <LanguageSelector value={language} onChange={onLanguageChange} />
+        )}
+        {onRestart && (
+          <button className="navbar-logout" onClick={onRestart}>
+            Restart
+          </button>
+        )}
+        {onLogout && (
+          <button className="navbar-logout" onClick={onLogout}>
+            Logout
+          </button>
+        )}
+      </div>
+    </header>
   );
 }
