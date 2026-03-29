@@ -8,6 +8,8 @@ import Navbar from '../components/Navbar';
 export default function ComplaintPage() {
   const navigate = useNavigate();
   const { language, setLanguage } = useLanguage();
+  const [showAssistant, setShowAssistant] = useState(false);
+  const [resetCounter, setResetCounter] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleGeneratePDF = async () => {
