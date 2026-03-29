@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Navbar from "../components/Navbar";
+import LandingNavbar from "../components/LandingNavbar";
 import CircularGallery from "../components/CircularGallery";
 import { useLanguage } from "../contexts/LanguageContext";
 
@@ -38,7 +38,7 @@ export default function LandingPage() {
   return (
     <main className="landing-page-root">
       {/* Navigation */}
-      <Navbar />
+      <LandingNavbar />
 
       {/* Hero Section */}
       <section className="landing-hero-container">

@@ -47,7 +47,13 @@ export default function ComplaintPage() {
 
   return (
     <div className="complaint-page">
-      <Navbar onRestart={handleRestart} />
+      <Navbar
+        onRestart={handleRestart}
+        language={language}
+        onLanguageChange={setLanguage}
+        brandTitle="Praja FIR"
+        brandIcon="/police_logo_v4.png"
+      />
       
       <div className="header-separator"></div>
 
